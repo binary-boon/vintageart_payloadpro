@@ -1,0 +1,464 @@
+// Black and White Theme Variables
+$primary-black: #000000;
+$secondary-black: #1a1a1a;
+$dark-gray: #2d2d2d;
+$medium-gray: #4a4a4a;
+$light-gray: #6b6b6b;
+$lighter-gray: #9a9a9a;
+$border-gray: #e0e0e0;
+$pure-white: #ffffff;
+$off-white: #f8f8f8;
+$shadow-dark: rgba(0, 0, 0, 0.15);
+$shadow-light: rgba(0, 0, 0, 0.08);
+$shadow-hover: rgba(0, 0, 0, 0.25);
+
+// Mixins
+@mixin glassmorphism-bw {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@mixin text-shadow-subtle {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+@mixin hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px $shadow-hover;
+  }
+}
+
+@mixin button-press {
+  transition: all 0.15s ease;
+  
+  &:active {
+    transform: translateY(1px) scale(0.98);
+  }
+}
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, $pure-white 0%, $off-white 50%, $pure-white 100%);
+  position: relative;
+  
+  // Subtle texture overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+      radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px, 75px 75px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  // Ensure content appears above texture
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.pageHeader {
+  background: linear-gradient(135deg, $primary-black 0%, $secondary-black 100%);
+  border-bottom: 3px solid $pure-white;
+  position: relative;
+  overflow: hidden;
+  
+  // Geometric pattern overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%),
+      linear-gradient(-45deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%);
+    background-size: 30px 30px;
+  }
+  
+  .headerContent {
+    container: mx-auto;
+    padding: 3rem 1rem;
+    max-width: 1200px;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    
+    @media (max-width: 768px) {
+      padding: 2rem 1rem;
+    }
+  }
+  
+  .title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: $pure-white;
+    margin-bottom: 1.5rem;
+    @include text-shadow-subtle;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    
+    // Subtle gradient text effect
+    background: linear-gradient(135deg, $pure-white 0%, $border-gray 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    @media (max-width: 768px) {
+      font-size: 2.5rem;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 2rem;
+    }
+  }
+  
+  .subtitle {
+    font-size: 1.25rem;
+    color: $lighter-gray;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.7;
+    font-weight: 300;
+    
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.gallerySection {
+  padding: 4rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    padding: 3rem 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 2rem 1rem;
+  }
+}
+
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.imageCard {
+  @include hover-lift;
+  background: $pure-white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px $shadow-light;
+  border: 2px solid transparent;
+  cursor: pointer;
+  
+  &:hover {
+    border-color: $primary-black;
+    box-shadow: 0 8px 30px $shadow-hover;
+  }
+  
+  .imageWrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 75%; // 4:3 aspect ratio
+    overflow: hidden;
+    background: $off-white;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent 49%, rgba(0, 0, 0, 0.05) 50%, transparent 51%);
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    &:hover::before {
+      opacity: 1;
+    }
+    
+    img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: grayscale(0%) contrast(1.1);
+      
+      &:hover {
+        transform: scale(1.05);
+        filter: grayscale(20%) contrast(1.2);
+      }
+    }
+  }
+  
+  .imageInfo {
+    padding: 1.5rem;
+    background: $pure-white;
+    
+    .imageTitle {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: $primary-black;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+    
+    .imageDescription {
+      font-size: 0.9rem;
+      color: $medium-gray;
+      line-height: 1.5;
+    }
+  }
+}
+
+.loadMoreSection {
+  text-align: center;
+  padding: 3rem 0;
+  
+  .loadMoreButton {
+    @include button-press;
+    background: linear-gradient(135deg, $primary-black 0%, $secondary-black 100%);
+    color: $pure-white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    
+    // Shine effect
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+    
+    &:hover {
+      background: linear-gradient(135deg, $secondary-black 0%, $dark-gray 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px $shadow-dark;
+      
+      &::before {
+        left: 100%;
+      }
+    }
+    
+    &:focus {
+      outline: 2px solid $primary-black;
+      outline-offset: 2px;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      
+      &:hover {
+        background: linear-gradient(135deg, $primary-black 0%, $secondary-black 100%);
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+// Stats or counter section (optional)
+.galleryStats {
+  background: $primary-black;
+  color: $pure-white;
+  padding: 2rem 1rem;
+  text-align: center;
+  margin: 3rem 0;
+  
+  .statsGrid {
+    max-width: 800px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+  
+  .statItem {
+    .statNumber {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: $pure-white;
+      margin-bottom: 0.5rem;
+      line-height: 1;
+    }
+    
+    .statLabel {
+      font-size: 1rem;
+      color: $lighter-gray;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  }
+}
+
+// Loading states
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.loadingSkeleton {
+  background: $off-white;
+  border-radius: 12px;
+  overflow: hidden;
+  
+  .skeletonImage {
+    width: 100%;
+    height: 210px;
+    background: linear-gradient(90deg, $border-gray 25%, $off-white 50%, $border-gray 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .skeletonContent {
+    padding: 1.5rem;
+    
+    .skeletonTitle {
+      height: 20px;
+      background: linear-gradient(90deg, $border-gray 25%, $off-white 50%, $border-gray 75%);
+      background-size: 200% 100%;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      animation: shimmer 2s infinite;
+    }
+    
+    .skeletonDescription {
+      height: 16px;
+      background: linear-gradient(90deg, $border-gray 25%, $off-white 50%, $border-gray 75%);
+      background-size: 200% 100%;
+      border-radius: 4px;
+      width: 70%;
+      animation: shimmer 2s infinite;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .galleryGrid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .galleryGrid {
+    gap: 1.5rem;
+  }
+  
+  .imageCard .imageInfo {
+    padding: 1.25rem;
+  }
+  
+  .loadMoreButton {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .galleryGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .imageCard .imageWrapper {
+    padding-bottom: 60%; // Adjust aspect ratio for mobile
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .imageCard {
+    border: 2px solid $primary-black;
+    
+    &:hover {
+      border-width: 3px;
+    }
+  }
+  
+  .pageHeader {
+    border-bottom-width: 4px;
+  }
+}
+
+// Dark mode support (in case needed)
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: linear-gradient(135deg, $secondary-black 0%, $primary-black 50%, $secondary-black 100%);
+  }
+  
+  .imageCard {
+    background: $secondary-black;
+    border-color: $dark-gray;
+    
+    .imageInfo {
+      background: $secondary-black;
+      
+      .imageTitle {
+        color: $pure-white;
+      }
+      
+      .imageDescription {
+        color: $lighter-gray;
+      }
+    }
+  }
+}

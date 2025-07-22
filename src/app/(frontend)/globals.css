@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
   h1,
@@ -47,6 +47,20 @@
     --success: 196 52% 74%;
     --warning: 34 89% 85%;
     --error: 10 100% 86%;
+
+    /* Add your custom variables here */
+    --block-padding: 80px;
+    --gutter-h: 20px;
+    
+    /* Color variables - adjust these based on your design system */
+    --color-dark-500: #333333;
+    --color-dark-60: #666666;
+    --color-gray-500: #666666;
+    --color-base-100: #f5f5f5;
+    --color-base-50: #fafafa;
+    --color-base-200: #e5e5e5;
+    --color-white-500: #ffffff;
+    --color-dark-50: #f9f9f9;
   }
 
   [data-theme='dark'] {
@@ -81,6 +95,16 @@
     --success: 196 100% 14%;
     --warning: 34 51% 25%;
     --error: 10 39% 43%;
+
+    /* Dark theme overrides for your custom variables */
+    --color-dark-500: #ffffff;
+    --color-dark-60: #cccccc;
+    --color-gray-500: #aaaaaa;
+    --color-base-100: #1a1a1a;
+    --color-base-50: #0f0f0f;
+    --color-base-200: #2a2a2a;
+    --color-white-500: #000000;
+    --color-dark-50: #111111;
   }
 }
 
@@ -100,4 +124,28 @@ html {
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
+}
+
+:root{
+  --block-padding: 80px;
+  --gutter-h: 20px;
+  
+  --color-dark-500: #1a1a1a;
+  --color-dark-60: #2a2a2a;
+  --color-dark-50: #f8f9fa;
+  --color-gray-500: #6b7280;
+  --color-white-500: #ffffff;
+  --color-base-100: #f3f4f6;
+  --color-base-200: #e5e7eb;
+  --color-base-50: #f9fafb;
+  
+  @include mid-break {
+    --block-padding: 60px;
+    --gutter-h: 16px;
+  }
+  
+  @include small-break {
+    --block-padding: 40px;
+    --gutter-h: 12px;
+  }
 }
