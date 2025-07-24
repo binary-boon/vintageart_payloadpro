@@ -1,3 +1,4 @@
+// src/payload.config.ts
 // Import S3 storage adapter
 import { s3Storage } from '@payloadcms/storage-s3'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
@@ -12,7 +13,7 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
-import { Product } from './collections/Product'
+import { Product } from './collections/Product' // Import from the correct path
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -64,7 +65,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Product],
+  collections: [Pages, Posts, Media, Categories, Users, Product], // Keep as Product
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

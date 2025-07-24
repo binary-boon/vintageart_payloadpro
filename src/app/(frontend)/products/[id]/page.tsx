@@ -7,6 +7,7 @@ import { Product, Media } from '@/payload-types'
 import { Media as MediaComponent } from '@/components/Media'
 import { Button } from '@/components/Button'
 import { generateMeta } from '@/utilities/generateMeta'
+import { formatPrice } from '@/utilities/shopHelpers'
 
 interface ProductDetailPageProps {
   params: Promise<{
@@ -54,7 +55,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{product.name}</h1>
 
             {product.price && (
-              <p className="text-3xl font-bold text-blue-600 mb-6">${product.price}</p>
+              <p className="text-3xl font-bold text-blue-600 mb-6">{formatPrice(product.price)}</p>
             )}
           </div>
 

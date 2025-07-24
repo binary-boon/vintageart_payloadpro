@@ -768,9 +768,66 @@ export interface ProductListingBlock {
 export interface Product {
   id: string;
   name: string;
+  slug?: string | null;
   image: string | Media;
-  price?: number | null;
+  images?:
+    | {
+        image: string | Media;
+        id?: string | null;
+      }[]
+    | null;
+  price: number;
+  /**
+   * Original price for showing discounts
+   */
+  compareAtPrice?: number | null;
+  /**
+   * Brief description shown in product cards
+   */
   description?: string | null;
+  /**
+   * Detailed product description for product page
+   */
+  fullDescription?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  category?: (string | null) | Category;
+  /**
+   * Tags for filtering and search
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  inStock?: boolean | null;
+  stockQuantity?: number | null;
+  featured?: boolean | null;
+  dimensions?: {
+    width?: number | null;
+    height?: number | null;
+    depth?: number | null;
+    weight?: number | null;
+  };
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    keywords?: string | null;
+  };
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1357,9 +1414,44 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
+  slug?: T;
   image?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
   price?: T;
+  compareAtPrice?: T;
   description?: T;
+  fullDescription?: T;
+  category?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  inStock?: T;
+  stockQuantity?: T;
+  featured?: T;
+  dimensions?:
+    | T
+    | {
+        width?: T;
+        height?: T;
+        depth?: T;
+        weight?: T;
+      };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        keywords?: T;
+      };
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
