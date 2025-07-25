@@ -120,10 +120,15 @@ export async function generateMetadata({ params }: ProductDetailPageProps) {
     }
   }
 
+  // Fixed generateMeta call - wrap data in the expected doc structure
   return generateMeta({
-    title: product.name,
-    description: product.description || `View details for ${product.name}`,
-    image:
-      product.image && typeof product.image === 'object' ? (product.image as Media) : undefined,
+    doc: {
+      meta: {
+        title: product.seo?.title || product.name,
+        description: product.seo?.description || product.description || `View details for ${product.name}`,
+        image: product.image && typeof product.image === 'object' ? (product.image as Media) : undefined,
+      },
+      slug: product.slug || product.id,
+    }
   })
 }
