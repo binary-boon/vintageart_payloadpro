@@ -34,6 +34,9 @@ const nextConfig = {
   },
   reactStrictMode: true,
   redirects,
-}
+},
+  typescript: {
+    ignoreBuildErrors: false, // Keep TypeScript errors
+  },
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })
