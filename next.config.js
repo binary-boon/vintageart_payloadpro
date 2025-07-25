@@ -12,13 +12,30 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
+      // Your Vercel deployment domain
+      ...[NEXT_PUBLIC_SERVER_URL].map((item) => {
         const url = new URL(item)
         return {
           hostname: url.hostname,
           protocol: url.protocol.replace(':', ''),
         }
       }),
+      // S3 bucket domain
+      {
+        protocol: 'https',
+        hostname: `${process.env.S3_BUCKET || 'vintageartecomm'}.s3.${process.env.S3_REGION || 'ap-south-1'}.amazonaws.com`,
+      },
+      // Alternative S3 URL format
+      {
+        protocol: 'https',
+        hostname: `s3.${process.env.S3_REGION || 'ap-south-1'}.amazonaws.com`,
+      },
+      // Local development
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+      },
     ],
   },
   webpack: (webpackConfig) => {
@@ -32,8 +49,8 @@ const nextConfig = {
   reactStrictMode: true,
   redirects,
   typescript: {
-    ignoreBuildErrors: false, // Keep TypeScript errors
+    ignoreBuildErrors: false,
   },
-} // Added missing closing brace and removed extra comma
+}
 
 export default withPayload(nextConfig, { devBundleServerPackages: false })
