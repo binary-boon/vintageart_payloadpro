@@ -9,12 +9,29 @@ import { getClientSideURL } from '@/utilities/getURL'
 export const getMediaUrl = (url: string | null | undefined, cacheTag?: string | null): string => {
   if (!url) return ''
 
-  // Check if URL already has http/https protocol
+  // If already a complete URL, return as-is (with optional cache tag)
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    return cacheTag ? `${url}?${cacheTag}` : url
+    return cacheTag ? `${url}?v=${cacheTag}` : url
   }
 
-  // Otherwise prepend client-side URL
+  // Handle various S3 URL formats that might come without protocol
+  const s3Patterns = [
+    /^[^/]+\.s3\.[^/]+\.amazonaws\.com/,  // bucket.s3.region.amazonaws.com
+    /^s3\.[^/]+\.amazonaws\.com/,         // s3.region.amazonaws.com/bucket
+    /amazonaws\.com/,                      // any amazonaws.com URL
+  ]
+
+  const isS3Url = s3Patterns.some(pattern => pattern.test(url))
+  
+  if (isS3Url) {
+    const httpsUrl = `https://${url}`
+    return cacheTag ? `${httpsUrl}?v=${cacheTag}` : httpsUrl
+  }
+
+  // For local/relative URLs, prepend the client-side URL
   const baseUrl = getClientSideURL()
-  return cacheTag ? `${baseUrl}${url}?${cacheTag}` : `${baseUrl}${url}`
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`
+  const fullUrl = `${baseUrl}${cleanUrl}`
+  
+  return cacheTag ? `${fullUrl}?v=${cacheTag}` : fullUrl
 }
