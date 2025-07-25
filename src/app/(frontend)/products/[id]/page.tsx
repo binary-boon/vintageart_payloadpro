@@ -67,11 +67,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
           {/* Action Buttons */}
           <div className="space-y-4">
-            <Button appearance="primary" size="large" className="w-full">
+            <Button appearance="primary" className="w-full">
               Add to Cart
             </Button>
 
-            <Button appearance="secondary" size="large" className="w-full">
+            <Button appearance="primary" className="w-full">
               Add to Wishlist
             </Button>
           </div>
