@@ -26,11 +26,7 @@ interface ShopPageProps {
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   // Await searchParams for Next.js 15 compatibility
   const resolvedSearchParams = await searchParams
-  // Temporary debug - add this in your shop component
-console.log('🛒 Product images:', products.map(p => ({
-  name: p.name,
-  imageUrl: typeof p.image === 'object' ? p.image?.url : p.image
-})))
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
