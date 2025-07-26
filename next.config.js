@@ -11,24 +11,31 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    // Disable image optimization for external URLs to avoid the 400 error
+    unoptimized: false,
     remotePatterns: [
       // Your Vercel deployment domain
-      ...[NEXT_PUBLIC_SERVER_URL].map((item) => {
-        const url = new URL(item)
-        return {
-          hostname: url.hostname,
-          protocol: url.protocol.replace(':', ''),
-        }
-      }),
-      // S3 bucket domain
+      {
+        protocol: 'https',
+        hostname: '**.vercel.app',
+      },
+      // S3 bucket patterns - be more specific
       {
         protocol: 'https',
         hostname: `${process.env.S3_BUCKET || 'vintageartecomm'}.s3.${process.env.S3_REGION || 'ap-south-1'}.amazonaws.com`,
       },
-      // Alternative S3 URL format
+      {
+        protocol: 'https', 
+        hostname: `${process.env.S3_BUCKET || 'vintageartecomm'}.s3.amazonaws.com`,
+      },
+      // General S3 pattern
       {
         protocol: 'https',
-        hostname: `s3.${process.env.S3_REGION || 'ap-south-1'}.amazonaws.com`,
+        hostname: '*.s3.*.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 's3.*.amazonaws.com',
       },
       // Local development
       {
@@ -36,6 +43,10 @@ const nextConfig = {
         hostname: 'localhost',
         port: '3000',
       },
+    ],
+    // Add specific domains that should be optimized
+    domains: [
+      `${process.env.S3_BUCKET || 'vintageartecomm'}.s3.${process.env.S3_REGION || 'ap-south-1'}.amazonaws.com`,
     ],
   },
   webpack: (webpackConfig) => {
