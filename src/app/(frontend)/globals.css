@@ -3,7 +3,14 @@
 @import 'tailwindcss/utilities';
 
 @layer base {
-  h1,
+  /* Main headings use Aboreto */
+  h1 {
+    font-size: unset;
+    font-weight: unset;
+    font-family: var(--font-aboreto), cursive;
+  }
+
+  /* Sub-headings and smaller headings use Montserrat */
   h2,
   h3,
   h4,
@@ -11,6 +18,20 @@
   h6 {
     font-size: unset;
     font-weight: unset;
+    font-family: var(--font-montserrat), sans-serif;
+  }
+
+  /* Body text, paragraphs use Montserrat */
+  body,
+  p,
+  span,
+  div,
+  a,
+  button,
+  input,
+  textarea,
+  label {
+    font-family: var(--font-montserrat), sans-serif;
   }
 
   :root {
@@ -47,6 +68,11 @@
     --success: 196 52% 74%;
     --warning: 34 89% 85%;
     --error: 10 100% 86%;
+
+    /* Font family variables */
+    --font-heading: var(--font-aboreto), cursive;
+    --font-subheading: var(--font-montserrat), sans-serif;
+    --font-body: var(--font-montserrat), sans-serif;
 
     /* Add your custom variables here */
     --block-padding: 80px;
@@ -114,6 +140,22 @@
   }
   body {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    font-family: var(--font-montserrat), sans-serif;
+  }
+}
+
+/* Utility classes for font families */
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-aboreto), cursive;
+  }
+  
+  .font-subheading {
+    font-family: var(--font-montserrat), sans-serif;
+  }
+  
+  .font-body {
+    font-family: var(--font-montserrat), sans-serif;
   }
 }
 

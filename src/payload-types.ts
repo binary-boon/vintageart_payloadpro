@@ -73,6 +73,7 @@ export interface Config {
     categories: Category;
     users: User;
     products: Product;
+    orders: Order;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -90,6 +91,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -833,6 +835,164 @@ export interface Product {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: string;
+  /**
+   * Auto-generated unique order number
+   */
+  orderNumber: string;
+  /**
+   * Current status of the order
+   */
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+  /**
+   * Payment status of the order
+   */
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
+  customerInfo: {
+    /**
+     * Customer full name
+     */
+    customerName: string;
+    /**
+     * Customer email address
+     */
+    customerEmail: string;
+    /**
+     * Customer phone number
+     */
+    customerPhone?: string | null;
+  };
+  shippingAddress: {
+    fullName: string;
+    /**
+     * Street address, house number, building name
+     */
+    addressLine1: string;
+    /**
+     * Apartment, suite, unit, floor, etc.
+     */
+    addressLine2?: string | null;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+  billingAddress?: {
+    /**
+     * Use shipping address as billing address
+     */
+    sameAsShipping?: boolean | null;
+    fullName?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+  };
+  items: {
+    product: string | Product;
+    /**
+     * Product details at time of purchase
+     */
+    productSnapshot: {
+      name: string;
+      price: number;
+      image?: (string | null) | Media;
+      description?: string | null;
+    };
+    quantity: number;
+    /**
+     * Price per unit at time of purchase
+     */
+    unitPrice: number;
+    /**
+     * Total price for this line item (unitPrice × quantity)
+     */
+    totalPrice: number;
+    id?: string | null;
+  }[];
+  pricing: {
+    /**
+     * Sum of all line items before tax and shipping
+     */
+    subtotal: number;
+    /**
+     * Shipping charges
+     */
+    shippingCost?: number | null;
+    /**
+     * Total tax amount
+     */
+    taxAmount?: number | null;
+    /**
+     * Total discount applied
+     */
+    discountAmount?: number | null;
+    /**
+     * Final total amount (subtotal + shipping + tax - discount)
+     */
+    totalAmount: number;
+  };
+  paymentInfo?: {
+    paymentMethod?: ('phonepe' | 'razorpay' | 'cod') | null;
+    /**
+     * Payment gateway transaction ID
+     */
+    paymentId?: string | null;
+    /**
+     * Additional payment gateway response data
+     */
+    paymentDetails?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
+  shippingInfo?: {
+    /**
+     * Shipping carrier tracking number
+     */
+    trackingNumber?: string | null;
+    /**
+     * Shipping carrier name
+     */
+    carrier?: string | null;
+    /**
+     * Estimated delivery date
+     */
+    estimatedDelivery?: string | null;
+    /**
+     * Date when order was shipped
+     */
+    shippedAt?: string | null;
+    /**
+     * Date when order was delivered
+     */
+    deliveredAt?: string | null;
+  };
+  notes?: {
+    /**
+     * Notes from customer during checkout
+     */
+    customerNotes?: string | null;
+    /**
+     * Internal notes for order processing (not visible to customer)
+     */
+    internalNotes?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1027,6 +1187,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: string | Product;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: string | Order;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1452,6 +1616,95 @@ export interface ProductsSelect<T extends boolean = true> {
         keywords?: T;
       };
   publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  orderNumber?: T;
+  status?: T;
+  paymentStatus?: T;
+  customerInfo?:
+    | T
+    | {
+        customerName?: T;
+        customerEmail?: T;
+        customerPhone?: T;
+      };
+  shippingAddress?:
+    | T
+    | {
+        fullName?: T;
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+        country?: T;
+      };
+  billingAddress?:
+    | T
+    | {
+        sameAsShipping?: T;
+        fullName?: T;
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+        country?: T;
+      };
+  items?:
+    | T
+    | {
+        product?: T;
+        productSnapshot?:
+          | T
+          | {
+              name?: T;
+              price?: T;
+              image?: T;
+              description?: T;
+            };
+        quantity?: T;
+        unitPrice?: T;
+        totalPrice?: T;
+        id?: T;
+      };
+  pricing?:
+    | T
+    | {
+        subtotal?: T;
+        shippingCost?: T;
+        taxAmount?: T;
+        discountAmount?: T;
+        totalAmount?: T;
+      };
+  paymentInfo?:
+    | T
+    | {
+        paymentMethod?: T;
+        paymentId?: T;
+        paymentDetails?: T;
+      };
+  shippingInfo?:
+    | T
+    | {
+        trackingNumber?: T;
+        carrier?: T;
+        estimatedDelivery?: T;
+        shippedAt?: T;
+        deliveredAt?: T;
+      };
+  notes?:
+    | T
+    | {
+        customerNotes?: T;
+        internalNotes?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

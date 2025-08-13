@@ -14,6 +14,7 @@ import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
 import { Product } from './collections/Product' // Import from the correct path
+import { Orders } from './collections/Orders' // ADD THIS LINE
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -65,7 +66,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Product], // Keep as Product
+  collections: [Pages, Posts, Media, Categories, Users, Product, Orders], // ADD Orders HERE
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

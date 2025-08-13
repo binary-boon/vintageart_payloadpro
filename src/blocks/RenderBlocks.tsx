@@ -15,7 +15,7 @@ const blockComponents = {
   cta: CallToActionBlock,
   formBlock: FormBlock,
   mediaBlock: MediaBlock,
-  productListing: ProductListingComponent, // Changed from 'productlistingComponent' to 'productListing'
+  productListing: ProductListingComponent, 
 }
 
 export const RenderBlocks: React.FC<{
