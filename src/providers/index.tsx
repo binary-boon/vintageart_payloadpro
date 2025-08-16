@@ -1,9 +1,10 @@
-// src/providers/index.tsx
+// src/providers/index.tsx - Fixed with CartProvider
 'use client'
-
 import React from 'react'
 
+import { AuthProvider } from './Auth'
 import { ThemeProvider } from './Theme'
+import { QuotationProvider } from '@/contexts/QuotationContext'
 import { CartProvider } from '@/contexts/CartContext'
 
 export const Providers: React.FC<{
@@ -11,7 +12,11 @@ export const Providers: React.FC<{
 }> = ({ children }) => {
   return (
     <ThemeProvider>
-      <CartProvider>{children}</CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <QuotationProvider>{children}</QuotationProvider>
+        </CartProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

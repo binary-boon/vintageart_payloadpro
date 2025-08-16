@@ -74,6 +74,7 @@ export interface Config {
     users: User;
     products: Product;
     orders: Order;
+    leads: Lead;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -92,6 +93,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -772,23 +774,22 @@ export interface Product {
   name: string;
   slug?: string | null;
   image: string | Media;
+  /**
+   * Add multiple images to showcase different angles and details of your artwork
+   */
   images?:
     | {
         image: string | Media;
+        caption?: string | null;
         id?: string | null;
       }[]
     | null;
-  price: number;
   /**
-   * Original price for showing discounts
-   */
-  compareAtPrice?: number | null;
-  /**
-   * Brief description shown in product cards
+   * Brief description shown in product cards and previews
    */
   description?: string | null;
   /**
-   * Detailed product description for product page
+   * Comprehensive description of the artwork, materials, and craftsmanship
    */
   fullDescription?: {
     root: {
@@ -807,7 +808,7 @@ export interface Product {
   } | null;
   category?: (string | null) | Category;
   /**
-   * Tags for filtering and search
+   * Tags for filtering and search (e.g., "handmade", "glass", "metal", "thikri")
    */
   tags?:
     | {
@@ -815,18 +816,100 @@ export interface Product {
         id?: string | null;
       }[]
     | null;
-  inStock?: boolean | null;
-  stockQuantity?: number | null;
+  /**
+   * Display this artwork in featured sections
+   */
   featured?: boolean | null;
+  artworkDetails?: {
+    /**
+     * Select all materials used in this Thikri artwork
+     */
+    materials?:
+      | {
+          material: 'glass' | 'metal' | 'wood' | 'brass' | 'silver' | 'gold-leaf' | 'mirror' | 'other';
+          customMaterial?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    technique?: ('traditional-thikri' | 'mirror-work' | 'glass-mosaic' | 'metal-inlay' | 'mixed-media') | null;
+    origin?: ('rajasthani' | 'gujarati' | 'mughal' | 'contemporary' | 'traditional') | null;
+    /**
+     * e.g., "3-4 weeks", "2 months" - how long it takes to create this piece
+     */
+    timeToCreate?: string | null;
+    /**
+     * Can this artwork be customized in terms of size, colors, or design elements?
+     */
+    customizable?: boolean | null;
+  };
+  /**
+   * These variants are for informational display only and do not affect inventory
+   */
+  availableVariants?: {
+    /**
+     * List all available sizes for display purposes
+     */
+    sizes?:
+      | {
+          /**
+           * e.g., "Small (15x15 cm)", "Medium (25x25 cm)"
+           */
+          sizeLabel: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * List all available colors and finishes for display purposes
+     */
+    colors?:
+      | {
+          /**
+           * e.g., "Traditional Gold", "Silver Accent", "Colorful Glass"
+           */
+          colorLabel: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
   dimensions?: {
     width?: number | null;
     height?: number | null;
     depth?: number | null;
     weight?: number | null;
   };
+  careInstructions?: {
+    /**
+     * How to properly clean and maintain this artwork
+     */
+    cleaningInstructions?: string | null;
+    /**
+     * Special handling or placement recommendations
+     */
+    handlingTips?: string | null;
+    durability?: ('delicate' | 'moderate' | 'durable') | null;
+  };
+  shipping?: {
+    /**
+     * Any special packaging or handling requirements for shipping
+     */
+    packagingNotes?: string | null;
+    /**
+     * Mark if this item requires fragile handling during shipping
+     */
+    fragile?: boolean | null;
+  };
   seo?: {
+    /**
+     * Custom meta title for search engines
+     */
     title?: string | null;
+    /**
+     * Custom meta description for search engines (150-160 characters)
+     */
     description?: string | null;
+    /**
+     * SEO keywords separated by commas
+     */
     keywords?: string | null;
   };
   publishedAt?: string | null;
@@ -988,6 +1071,65 @@ export interface Order {
      */
     internalNotes?: string | null;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  company?: string | null;
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+  };
+  products: {
+    product: string | Product;
+    quantity: number;
+    /**
+     * Any specific requirements for this product
+     */
+    customRequirements?: string | null;
+    id?: string | null;
+  }[];
+  projectDetails?: {
+    projectType?: ('home-decoration' | 'office-interior' | 'hospitality' | 'retail' | 'event' | 'other') | null;
+    budget?: ('under-10k' | '10k-50k' | '50k-100k' | '100k-500k' | 'above-500k' | 'flexible') | null;
+    timeline?: ('asap' | '1-2-weeks' | '1-month' | '2-3-months' | 'flexible') | null;
+    /**
+     * If different from customer address
+     */
+    deliveryAddress?: string | null;
+  };
+  /**
+   * Any other specific requirements or questions
+   */
+  additionalRequirements?: string | null;
+  hearAboutUs?: ('google' | 'social-media' | 'word-of-mouth' | 'advertisement' | 'existing-customer' | 'other') | null;
+  status: 'new' | 'in-progress' | 'quoted' | 'negotiating' | 'won' | 'lost' | 'on-hold';
+  priority?: ('low' | 'medium' | 'high' | 'urgent') | null;
+  assignedTo?: (string | null) | User;
+  /**
+   * Internal notes for tracking lead progress
+   */
+  notes?:
+    | {
+        note: string;
+        author: string | User;
+        date: string;
+        id?: string | null;
+      }[]
+    | null;
+  quotedAmount?: number | null;
+  followUpDate?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1191,6 +1333,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: string | Order;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: string | Lead;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1584,10 +1730,9 @@ export interface ProductsSelect<T extends boolean = true> {
     | T
     | {
         image?: T;
+        caption?: T;
         id?: T;
       };
-  price?: T;
-  compareAtPrice?: T;
   description?: T;
   fullDescription?: T;
   category?: T;
@@ -1597,9 +1742,38 @@ export interface ProductsSelect<T extends boolean = true> {
         tag?: T;
         id?: T;
       };
-  inStock?: T;
-  stockQuantity?: T;
   featured?: T;
+  artworkDetails?:
+    | T
+    | {
+        materials?:
+          | T
+          | {
+              material?: T;
+              customMaterial?: T;
+              id?: T;
+            };
+        technique?: T;
+        origin?: T;
+        timeToCreate?: T;
+        customizable?: T;
+      };
+  availableVariants?:
+    | T
+    | {
+        sizes?:
+          | T
+          | {
+              sizeLabel?: T;
+              id?: T;
+            };
+        colors?:
+          | T
+          | {
+              colorLabel?: T;
+              id?: T;
+            };
+      };
   dimensions?:
     | T
     | {
@@ -1607,6 +1781,19 @@ export interface ProductsSelect<T extends boolean = true> {
         height?: T;
         depth?: T;
         weight?: T;
+      };
+  careInstructions?:
+    | T
+    | {
+        cleaningInstructions?: T;
+        handlingTips?: T;
+        durability?: T;
+      };
+  shipping?:
+    | T
+    | {
+        packagingNotes?: T;
+        fragile?: T;
       };
   seo?:
     | T
@@ -1705,6 +1892,58 @@ export interface OrdersSelect<T extends boolean = true> {
         customerNotes?: T;
         internalNotes?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  customerName?: T;
+  email?: T;
+  phone?: T;
+  company?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+        country?: T;
+      };
+  products?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        customRequirements?: T;
+        id?: T;
+      };
+  projectDetails?:
+    | T
+    | {
+        projectType?: T;
+        budget?: T;
+        timeline?: T;
+        deliveryAddress?: T;
+      };
+  additionalRequirements?: T;
+  hearAboutUs?: T;
+  status?: T;
+  priority?: T;
+  assignedTo?: T;
+  notes?:
+    | T
+    | {
+        note?: T;
+        author?: T;
+        date?: T;
+        id?: T;
+      };
+  quotedAmount?: T;
+  followUpDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }

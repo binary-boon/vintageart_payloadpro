@@ -13,8 +13,9 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
-import { Product } from './collections/Product' // Import from the correct path
-import { Orders } from './collections/Orders' // ADD THIS LINE
+import { Product } from './collections/Product'
+import { Orders } from './collections/Orders'
+import { Leads } from './collections/Leads' // ADD THIS LINE
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -66,7 +67,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Product, Orders], // ADD Orders HERE
+  collections: [Pages, Posts, Media, Categories, Users, Product, Orders, Leads],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [

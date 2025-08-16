@@ -9,6 +9,7 @@ import type { Header } from '@/payload-types'
 import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
 import { CartDropdown } from '@/components/Cart/CartDropdown'
+import { QuotationIcon } from '@/components/RequestQuote/QuotationIcon'
 
 interface HeaderClientProps {
   data: Header
@@ -39,8 +40,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
         <div className="flex items-center gap-4">
           <HeaderNav data={data} />
-          {/* Add Cart Dropdown here */}
-          <CartDropdown />
+
+          {/* Quote Request and Cart Icons */}
+          <div className="flex items-center gap-2">
+            <QuotationIcon />
+            <CartDropdown />
+          </div>
         </div>
       </div>
     </header>
