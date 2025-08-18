@@ -1,11 +1,10 @@
-// src/app/(frontend)/request-quote/page.tsx
+// src/app/(frontend)/request-quote/page.tsx - FIXED VERSION (Remove price references)
 'use client'
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuotation } from '@/contexts/QuotationContext'
 import { Media as MediaComponent } from '@/components/Media'
-import { formatPrice } from '@/utilities/shopHelpers'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Media } from '@/payload-types'
 import {
@@ -80,11 +79,6 @@ export default function RequestQuotePage() {
       router.push('/shop')
     }
   }, [state.items.length, router, success])
-
-  const totalEstimate = state.items.reduce(
-    (total, item) => total + item.product.price * item.quantity,
-    0,
-  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -420,7 +414,7 @@ export default function RequestQuotePage() {
             </form>
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary - NO PRICING */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
               <div className="flex items-center gap-3 mb-6">
@@ -444,7 +438,7 @@ export default function RequestQuotePage() {
                       <h4 className="font-medium text-sm text-gray-900 truncate">
                         {item.product.name}
                       </h4>
-                      <p className="text-xs text-gray-500">{formatPrice(item.product.price)}</p>
+                      <p className="text-xs text-gray-500">Custom Quote Item</p>
 
                       <div className="flex items-center gap-2 mt-1">
                         <button
@@ -485,13 +479,13 @@ export default function RequestQuotePage() {
                   <span className="text-sm text-gray-600">{state.items.length}</span>
                 </div>
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm font-medium text-gray-900">Estimated Total:</span>
+                  <span className="text-sm font-medium text-gray-900">Total Quantity:</span>
                   <span className="text-lg font-bold text-gray-900">
-                    {formatPrice(totalEstimate)}
+                    {state.items.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500">
-                  *This is an estimate. Final pricing may vary based on customization and
+                  *Pricing will be provided in your personalized quote based on your specific
                   requirements.
                 </p>
               </div>

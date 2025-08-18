@@ -1,4 +1,4 @@
-// src/components/Shop/ShopComponent.tsx
+// src/components/Shop/ShopComponent.tsx - FIXED VERSION
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -19,7 +19,7 @@ interface ShopFilters {
   sortBy?: string
   search?: string
   page?: number
-  inStock?: boolean
+  // Removed inStock?: boolean
   featured?: boolean
   tags?: string[]
 }
@@ -32,7 +32,7 @@ interface ShopComponentProps {
     sortBy?: string
     search?: string
     page?: string
-    inStock?: string
+    // Removed inStock?: string
     featured?: string
     tags?: string
   }
@@ -57,7 +57,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Parse search params into filters
+  // Parse search params into filters - REMOVED inStock
   const filters: ShopFilters = {
     category: searchParams.category,
     minPrice: searchParams.minPrice ? parseFloat(searchParams.minPrice) : undefined,
@@ -65,7 +65,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
     sortBy: searchParams.sortBy || 'newest',
     search: searchParams.search,
     page: searchParams.page ? parseInt(searchParams.page) : 1,
-    inStock: searchParams.inStock === 'true',
+    // Removed inStock: searchParams.inStock === 'true',
     featured: searchParams.featured === 'true',
     tags: searchParams.tags ? searchParams.tags.split(',') : undefined,
   }
@@ -79,14 +79,14 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
       try {
         const queryParams = new URLSearchParams()
 
-        // Add filters to query params
+        // Add filters to query params - REMOVED inStock
         if (filters.category) queryParams.set('category', filters.category)
         if (filters.minPrice) queryParams.set('minPrice', filters.minPrice.toString())
         if (filters.maxPrice) queryParams.set('maxPrice', filters.maxPrice.toString())
         if (filters.sortBy) queryParams.set('sortBy', filters.sortBy)
         if (filters.search) queryParams.set('search', filters.search)
         if (filters.page) queryParams.set('page', filters.page.toString())
-        if (filters.inStock) queryParams.set('inStock', 'true')
+        // Removed if (filters.inStock) queryParams.set('inStock', 'true')
         if (filters.featured) queryParams.set('featured', 'true')
         if (filters.tags?.length) queryParams.set('tags', filters.tags.join(','))
 
@@ -113,7 +113,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
     filters.sortBy,
     filters.search,
     filters.page,
-    filters.inStock,
+    // Removed filters.inStock,
     filters.featured,
     filters.tags?.join(','),
   ])

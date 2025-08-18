@@ -1,10 +1,9 @@
-// src/components/RequestQuote/RequestQuoteButton.tsx
+// src/components/RequestQuote/RequestQuoteButton.tsx - DEBUG VERSION
 'use client'
 
 import React from 'react'
 import { Product } from '@/payload-types'
 import { useQuotation } from '@/contexts/QuotationContext'
-import { Button } from '@/components/ui/button'
 import { FileText, Check } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 
@@ -27,15 +26,36 @@ export const RequestQuoteButton: React.FC<RequestQuoteButtonProps> = ({
 }) => {
   const { addItem, state, setModalOpen } = useQuotation()
 
+  // Debug logging
+  console.log('RequestQuoteButton rendered with:', {
+    productId: product.id,
+    productName: product.name,
+    hasAddItem: typeof addItem === 'function',
+    hasSetModalOpen: typeof setModalOpen === 'function',
+    currentItems: state.items.length,
+    state: state,
+  })
+
   // Check if product is already in quotation request
   const isInQuotation = state.items.some((item) => item.product.id === product.id)
 
   const handleRequestQuote = () => {
-    if (!isInQuotation) {
-      addItem(product, 1)
+    console.log('Request quote button clicked for:', product.name)
+    console.log('Is in quotation already:', isInQuotation)
+
+    try {
+      if (!isInQuotation) {
+        console.log('Adding item to quotation...')
+        addItem(product, 1)
+        console.log('Item added successfully')
+      }
+
+      console.log('Opening modal...')
+      setModalOpen(true)
+      console.log('Modal opened')
+    } catch (error) {
+      console.error('Error in handleRequestQuote:', error)
     }
-    // Open the quotation modal/page
-    setModalOpen(true)
   }
 
   const buttonSizes = {
@@ -60,13 +80,12 @@ export const RequestQuoteButton: React.FC<RequestQuoteButtonProps> = ({
     <button
       onClick={handleRequestQuote}
       className={cn(
-        'inline-flex items-center justify-center font-medium rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center font-medium rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
         buttonSizes[size],
         buttonVariants[variant],
         fullWidth ? 'w-full' : '',
         className,
       )}
-      disabled={!product.inStock}
     >
       {showIcon && (
         <span className="mr-2">
@@ -74,12 +93,12 @@ export const RequestQuoteButton: React.FC<RequestQuoteButtonProps> = ({
         </span>
       )}
 
-      {!product.inStock ? 'Out of Stock' : isInQuotation ? 'Added to Quote' : 'Request Quote'}
+      {isInQuotation ? 'Added to Quote' : 'Request Quote'}
     </button>
   )
 }
 
-// Quick add button for grid views
+// Quick add button for grid views - ALSO FIXED
 export const QuickRequestQuoteButton: React.FC<{ product: Product }> = ({ product }) => {
   const { addItem, state } = useQuotation()
   const isInQuotation = state.items.some((item) => item.product.id === product.id)
@@ -88,30 +107,31 @@ export const QuickRequestQuoteButton: React.FC<{ product: Product }> = ({ produc
     e.preventDefault() // Prevent navigation if used inside a Link
     e.stopPropagation()
 
-    if (!isInQuotation && product.inStock) {
-      addItem(product, 1)
+    console.log('Quick add button clicked for:', product.name)
+    console.log('Is in quotation already:', isInQuotation)
+
+    try {
+      if (!isInQuotation) {
+        console.log('Adding item via quick add...')
+        addItem(product, 1)
+        console.log('Item added via quick add successfully')
+      }
+    } catch (error) {
+      console.error('Error in handleQuickAdd:', error)
     }
   }
 
   return (
     <button
       onClick={handleQuickAdd}
-      disabled={!product.inStock || isInQuotation}
+      disabled={isInQuotation}
       className={cn(
         'absolute top-4 left-4 p-2 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100',
         isInQuotation
-          ? 'bg-green-600 text-white'
-          : product.inStock
-            ? 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-            : 'bg-gray-100 text-gray-400 cursor-not-allowed',
+          ? 'bg-green-600 text-white cursor-default'
+          : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer',
       )}
-      title={
-        !product.inStock
-          ? 'Out of Stock'
-          : isInQuotation
-            ? 'Added to Quote Request'
-            : 'Quick Add to Quote Request'
-      }
+      title={isInQuotation ? 'Added to Quote Request' : 'Quick Add to Quote Request'}
     >
       {isInQuotation ? <Check className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
     </button>

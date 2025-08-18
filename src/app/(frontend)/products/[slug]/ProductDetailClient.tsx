@@ -1,4 +1,4 @@
-// src/app/(frontend)/products/[slug]/ProductDetailClient.tsx
+// src/app/(frontend)/products/[slug]/ProductDetailClient.tsx - FIXED VERSION
 'use client'
 
 import React, { useState } from 'react'
@@ -8,7 +8,7 @@ import { Product, Media } from '@/payload-types'
 import { Media as MediaComponent } from '@/components/Media'
 import { RequestQuoteButton } from '@/components/RequestQuote/RequestQuoteButton'
 import { ProductCard } from '@/components/ProductCard'
-import { serialize } from '@payloadcms/richtext-lexical/react'
+import { RichText } from '@payloadcms/richtext-lexical/react' // FIXED: Use RichText instead of serialize
 
 interface ProductDetailClientProps {
   product: Product
@@ -352,9 +352,8 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             <div className="bg-white rounded-lg p-8 border">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">About This Artwork</h2>
               <div className="prose prose-lg max-w-none">
-                {serialize({
-                  nodes: product.fullDescription?.root?.children || [],
-                })}
+                {/* FIXED: Use RichText component instead of serialize */}
+                <RichText data={product.fullDescription} />
               </div>
 
               {/* Thikri Information */}

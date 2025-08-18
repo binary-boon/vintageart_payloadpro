@@ -1,10 +1,9 @@
-// src/components/RequestQuote/QuotationSidebar.tsx
+// src/components/RequestQuote/QuotationSidebar.tsx - FINAL FIXED VERSION
 'use client'
 
 import React from 'react'
 import { useQuotation } from '@/contexts/QuotationContext'
 import { Media as MediaComponent } from '@/components/Media'
-import { formatPrice } from '@/utilities/shopHelpers'
 import { X, Plus, Minus, FileText, ArrowRight } from 'lucide-react'
 import { Media } from '@/payload-types'
 import Link from 'next/link'
@@ -14,16 +13,11 @@ export const QuotationSidebar: React.FC = () => {
 
   if (!state.isOpen) return null
 
-  const totalEstimate = state.items.reduce(
-    (total, item) => total + item.product.price * item.quantity,
-    0,
-  )
-
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden"
+        className="fixed inset-0 bg-black bg-opacity-50 z-50"
         onClick={() => setModalOpen(false)}
       />
 
@@ -77,54 +71,69 @@ export const QuotationSidebar: React.FC = () => {
 
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-gray-900 truncate">{item.product.name}</h4>
-                    <p className="text-sm text-gray-500">{formatPrice(item.product.price)}</p>
+                    <p className="text-sm text-blue-600 font-medium">Custom Quote Item</p>
 
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                        className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
                         disabled={item.quantity <= 1}
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="px-2 py-1 text-sm font-medium bg-white border rounded">
+                      <span className="px-2 py-1 text-sm font-medium bg-white border rounded min-w-[2rem] text-center">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                        className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
 
                       <button
                         onClick={() => removeItem(item.product.id)}
-                        className="ml-auto p-1 text-red-400 hover:text-red-600 rounded"
+                        className="ml-auto p-1 text-red-400 hover:text-red-600 rounded transition-colors"
+                        title="Remove from quote"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
+
+                    {/* Custom Requirements */}
+                    {item.customRequirements && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-500">
+                          <span className="font-medium">Notes:</span> {item.customRequirements}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
 
-              {/* Summary */}
+              {/* Summary - NO PRICING */}
               <div className="border-t pt-4 mt-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-900">Total Items:</span>
                   <span className="text-sm text-gray-600">{state.items.length}</span>
                 </div>
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm font-medium text-gray-900">Estimated Total:</span>
-                  <span className="text-lg font-bold text-gray-900">
-                    {formatPrice(totalEstimate)}
+                  <span className="text-sm font-medium text-gray-900">Total Quantity:</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {state.items.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mb-4">
-                  *This is an estimate. Final pricing may vary based on customization and
-                  requirements.
-                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 font-medium mb-1">
+                    🎨 Custom Thikri Artwork Quote
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Each piece is handcrafted to your specifications. Pricing depends on size,
+                    materials, and customization details.
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -136,13 +145,14 @@ export const QuotationSidebar: React.FC = () => {
             <Link
               href="/request-quote"
               onClick={() => setModalOpen(false)}
-              className="w-full inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
             >
+              <FileText className="w-4 h-4 mr-2" />
               Proceed to Quote Request
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
             <p className="text-xs text-gray-500 text-center mt-2">
-              Fill out details to get a personalized quote
+              Fill out details to get a personalized quote within 24 hours
             </p>
           </div>
         )}

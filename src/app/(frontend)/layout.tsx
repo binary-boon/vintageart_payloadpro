@@ -11,7 +11,8 @@ import React from 'react'
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
-import { QuotationSidebar } from '@/components/RequestQuote/QuotationSidebar' // ADD THIS
+// REMOVE THIS LINE - QuotationSidebar is already in Providers
+// import { QuotationSidebar } from '@/components/RequestQuote/QuotationSidebar'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
@@ -62,8 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
           <Footer />
 
-          {/* ADD THE QUOTATION SIDEBAR */}
-          <QuotationSidebar />
+          {/* QuotationSidebar is already included in Providers, no need to add it here */}
         </Providers>
       </body>
     </html>

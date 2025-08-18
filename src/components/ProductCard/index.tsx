@@ -1,4 +1,4 @@
-// src/components/ProductCard/index.tsx
+// src/components/ProductCard/index.tsx - FIXED VERSION
 'use client'
 
 import React from 'react'
@@ -29,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   priority = false,
   viewMode = 'grid',
 }) => {
-  const { name, description, price, image } = product
+  const { name, description, image } = product
 
   if (viewMode === 'list') {
     return (
@@ -50,15 +50,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               priority={priority}
             />
           )}
-
-          {/* Stock status overlay */}
-          {!product.inStock && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <span className="bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium">
-                Out of Stock
-              </span>
-            </div>
-          )}
         </Link>
 
         <div className="flex-1 p-6 flex flex-col justify-between">
@@ -69,34 +60,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   {name}
                 </h3>
               </Link>
-              {price && (
-                <div className="ml-4 text-right">
-                  <span className="text-2xl font-bold text-gray-900">{formatPrice(price)}</span>
-                  {product.compareAtPrice && product.compareAtPrice > price && (
-                    <div className="text-sm text-gray-500 line-through">
-                      {formatPrice(product.compareAtPrice)}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* Stock and Featured badges */}
+            {/* Badges - Removed stock status, kept featured */}
             <div className="flex items-center gap-2 mb-3">
               {product.featured && (
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
                   Featured
                 </span>
               )}
-              {product.inStock ? (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                  In Stock
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                  Out of Stock
-                </span>
-              )}
+              {/* Always show as available for quote */}
+              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                Available for Quote
+              </span>
             </div>
 
             {showDescription && description && (
@@ -141,49 +117,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             />
           )}
 
-          {/* Price tag */}
-          {price && (
-            <div className="absolute top-4 right-4 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-medium">
-              {formatPrice(price)}
-              {product.compareAtPrice && product.compareAtPrice > price && (
-                <div className="text-xs text-gray-300 line-through">
-                  {formatPrice(product.compareAtPrice)}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Quick Request Quote Button */}
           {showRequestQuote && <QuickRequestQuoteButton product={product} />}
-
-          {/* Stock status overlay */}
-          {!product.inStock && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <span className="bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium">
-                Out of Stock
-              </span>
-            </div>
-          )}
         </div>
       </Link>
 
       <div className="p-4 space-y-3">
-        {/* Badges */}
+        {/* Badges - Removed stock status, kept featured */}
         <div className="flex items-center gap-2">
           {product.featured && (
             <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
               Featured
             </span>
           )}
-          {product.inStock ? (
-            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-              In Stock
-            </span>
-          ) : (
-            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-              Out of Stock
-            </span>
-          )}
+          {/* Always show as available for quote */}
+          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+            Available for Quote
+          </span>
         </div>
 
         <Link href={`/products/${product.id}`}>
@@ -197,17 +147,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         <div className="flex items-center justify-between">
-          {price && (
-            <div>
-              <span className="text-xl font-bold text-gray-900">{formatPrice(price)}</span>
-              {product.compareAtPrice && product.compareAtPrice > price && (
-                <div className="text-sm text-gray-500 line-through">
-                  {formatPrice(product.compareAtPrice)}
-                </div>
-              )}
-            </div>
-          )}
-
           <Link
             href={`/products/${product.id}`}
             className="text-sm text-blue-600 font-medium group-hover:underline"

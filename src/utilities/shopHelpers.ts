@@ -1,4 +1,7 @@
-export function formatPrice(price: number, currency = '₹'): string {
+export function formatPrice(price: number | undefined | null, currency = '₹'): string {
+  if (price === undefined || price === null || isNaN(price)) {
+    return 'Request Quote'
+  }
   return `${currency}${price.toLocaleString('en-IN')}`
 }
 
