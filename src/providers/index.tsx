@@ -5,7 +5,7 @@ import React from 'react'
 import { AuthProvider } from './Auth'
 import { ThemeProvider } from './Theme'
 import { QuotationProvider } from '@/contexts/QuotationContext'
-import { CartProvider } from '@/contexts/CartContext'
+
 import { QuotationSidebar } from '@/components/RequestQuote/QuotationSidebar'
 
 export const Providers: React.FC<{
@@ -14,13 +14,11 @@ export const Providers: React.FC<{
   return (
     <ThemeProvider>
       <AuthProvider>
-        <CartProvider>
-          <QuotationProvider>
-            {children}
-            {/* Add the QuotationSidebar globally so it's available everywhere */}
-            <QuotationSidebar />
-          </QuotationProvider>
-        </CartProvider>
+        <QuotationProvider>
+          {children}
+          {/* Add the QuotationSidebar globally so it's available everywhere */}
+          <QuotationSidebar />
+        </QuotationProvider>
       </AuthProvider>
     </ThemeProvider>
   )
