@@ -121,20 +121,20 @@ export async function GET(request: NextRequest) {
       sort: 'title',
     })
 
-    // Get price range for filters
-    const allProductsForPriceRange = await payload.find({
-      collection: 'products',
-      limit: 1000, // Adjust based on your needs
-      select: {
-        price: true,
-      },
-    })
+    // // Get price range for filters
+    // const allProductsForPriceRange = await payload.find({
+    //   collection: 'products',
+    //   limit: 1000, // Adjust based on your needs
+    //   select: {
+    //     price: true,
+    //   },
+    // })
 
-    const prices = allProductsForPriceRange.docs.map((p) => p.price || 0).filter((p) => p > 0)
-    const priceRange = {
-      min: prices.length > 0 ? Math.min(...prices) : 0,
-      max: prices.length > 0 ? Math.max(...prices) : 1000,
-    }
+    // const prices = allProductsForPriceRange.docs.map((p) => p.price || 0).filter((p) => p > 0)
+    // const priceRange = {
+    //   min: prices.length > 0 ? Math.min(...prices) : 0,
+    //   max: prices.length > 0 ? Math.max(...prices) : 1000,
+    // }
 
     // Get all available tags
     const allProductsForTags = await payload.find({
@@ -160,7 +160,6 @@ export async function GET(request: NextRequest) {
       currentPage: productsResult.page || 1,
       totalProducts: productsResult.totalDocs,
       categories: categoriesResult.docs,
-      priceRange,
       availableTags,
     }
 
