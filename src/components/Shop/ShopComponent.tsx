@@ -1,4 +1,4 @@
-// src/components/Shop/ShopComponent.tsx - FIXED VERSION
+// src/components/Shop/ShopComponent.tsx - FINAL VERSION WITHOUT PRICING
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -14,12 +14,9 @@ import { Filter, Grid, List } from 'lucide-react'
 
 interface ShopFilters {
   category?: string
-  minPrice?: number
-  maxPrice?: number
   sortBy?: string
   search?: string
   page?: number
-  // Removed inStock?: boolean
   featured?: boolean
   tags?: string[]
 }
@@ -27,12 +24,9 @@ interface ShopFilters {
 interface ShopComponentProps {
   searchParams: {
     category?: string
-    minPrice?: string
-    maxPrice?: string
     sortBy?: string
     search?: string
     page?: string
-    // Removed inStock?: string
     featured?: string
     tags?: string
   }
@@ -44,7 +38,6 @@ interface ShopData {
   currentPage: number
   totalProducts: number
   categories: Category[]
-  priceRange: { min: number; max: number }
   availableTags: string[]
 }
 
@@ -57,15 +50,12 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Parse search params into filters - REMOVED inStock
+  // Parse search params into filters - REMOVED ALL PRICE FIELDS
   const filters: ShopFilters = {
     category: searchParams.category,
-    minPrice: searchParams.minPrice ? parseFloat(searchParams.minPrice) : undefined,
-    maxPrice: searchParams.maxPrice ? parseFloat(searchParams.maxPrice) : undefined,
     sortBy: searchParams.sortBy || 'newest',
     search: searchParams.search,
     page: searchParams.page ? parseInt(searchParams.page) : 1,
-    // Removed inStock: searchParams.inStock === 'true',
     featured: searchParams.featured === 'true',
     tags: searchParams.tags ? searchParams.tags.split(',') : undefined,
   }
@@ -79,14 +69,11 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
       try {
         const queryParams = new URLSearchParams()
 
-        // Add filters to query params - REMOVED inStock
+        // Add filters to query params - REMOVED ALL PRICE FIELDS
         if (filters.category) queryParams.set('category', filters.category)
-        if (filters.minPrice) queryParams.set('minPrice', filters.minPrice.toString())
-        if (filters.maxPrice) queryParams.set('maxPrice', filters.maxPrice.toString())
         if (filters.sortBy) queryParams.set('sortBy', filters.sortBy)
         if (filters.search) queryParams.set('search', filters.search)
         if (filters.page) queryParams.set('page', filters.page.toString())
-        // Removed if (filters.inStock) queryParams.set('inStock', 'true')
         if (filters.featured) queryParams.set('featured', 'true')
         if (filters.tags?.length) queryParams.set('tags', filters.tags.join(','))
 
@@ -108,12 +95,9 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
     fetchProducts()
   }, [
     filters.category,
-    filters.minPrice,
-    filters.maxPrice,
     filters.sortBy,
     filters.search,
     filters.page,
-    // Removed filters.inStock,
     filters.featured,
     filters.tags?.join(','),
   ])
@@ -191,7 +175,6 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
             filters={filters}
             onFiltersChange={updateFilters}
             categories={data.categories}
-            priceRange={data.priceRange}
             availableTags={data.availableTags}
             onClearFilters={clearFilters}
             hasActiveFilters={hasActiveFilters}
@@ -248,7 +231,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
         {/* Results Info */}
         <div className="flex justify-between items-center mb-6 text-sm text-gray-600">
           <span>
-            Showing {data.products.length} of {data.totalProducts} products
+            Showing {data.products.length} of {data.totalProducts} artworks
             {filters.search && ` for "${filters.search}"`}
           </span>
           {hasActiveFilters && (
@@ -261,7 +244,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
         {/* Products Grid/List */}
         {data.products.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-xl text-gray-600 mb-4">No products found</p>
+            <p className="text-xl text-gray-600 mb-4">No artworks found</p>
             <p className="text-gray-500 mb-6">Try adjusting your filters or search terms</p>
             {hasActiveFilters && (
               <button
