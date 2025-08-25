@@ -77,6 +77,12 @@ export default buildConfig({
       collections: {
         media: {
           prefix: 'media', // Optional: organize files in folders
+          // Add generateFileURL to handle custom domain
+          generateFileURL: ({ filename }) => {
+            // Use the server URL from environment or fallback
+            const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || getServerSideURL()
+            return `https://${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com/media/${filename}`
+          },
         },
       },
       bucket: process.env.S3_BUCKET!,
@@ -94,6 +100,8 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
+  // Add serverURL to ensure proper URL generation
+  serverURL: getServerSideURL(),
   jobs: {
     access: {
       run: ({ req }: { req: PayloadRequest }): boolean => {
