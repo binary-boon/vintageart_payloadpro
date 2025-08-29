@@ -1,4 +1,4 @@
-// src/components/Shop/ShopComponent.tsx - FINAL VERSION WITHOUT PRICING
+// src/components/Shop/ShopComponent.tsx - FIXED PAGINATION
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -50,7 +50,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Parse search params into filters - REMOVED ALL PRICE FIELDS
+  // Parse search params into filters
   const filters: ShopFilters = {
     category: searchParams.category,
     sortBy: searchParams.sortBy || 'newest',
@@ -69,7 +69,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
       try {
         const queryParams = new URLSearchParams()
 
-        // Add filters to query params - REMOVED ALL PRICE FIELDS
+        // Add filters to query params
         if (filters.category) queryParams.set('category', filters.category)
         if (filters.sortBy) queryParams.set('sortBy', filters.sortBy)
         if (filters.search) queryParams.set('search', filters.search)
@@ -102,11 +102,16 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
     filters.tags?.join(','),
   ])
 
-  // Update URL with new filters
-  const updateFilters = (newFilters: Partial<ShopFilters>) => {
+  // FIXED: Update URL with new filters - separate logic for pagination vs other filters
+  const updateFilters = (newFilters: Partial<ShopFilters>, resetPage: boolean = true) => {
     const params = new URLSearchParams()
 
-    const updatedFilters = { ...filters, ...newFilters, page: 1 } // Reset to page 1 when filters change
+    // Only reset page to 1 if resetPage is true (for filter changes, not pagination)
+    const updatedFilters = {
+      ...filters,
+      ...newFilters,
+      ...(resetPage && !newFilters.page ? { page: 1 } : {}),
+    }
 
     Object.entries(updatedFilters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -124,6 +129,11 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
     const newUrl = queryString ? `${pathname}?${queryString}` : pathname
 
     router.push(newUrl)
+  }
+
+  // FIXED: Separate function for pagination that doesn't reset to page 1
+  const handlePageChange = (page: number) => {
+    updateFilters({ page }, false) // false = don't reset page
   }
 
   // Clear all filters
@@ -173,7 +183,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
         <div className="sticky top-4">
           <ShopFilters
             filters={filters}
-            onFiltersChange={updateFilters}
+            onFiltersChange={updateFilters} // This will reset page to 1
             categories={data.categories}
             availableTags={data.availableTags}
             onClearFilters={clearFilters}
@@ -199,7 +209,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
             {/* Search */}
             <ShopSearch
               value={filters.search || ''}
-              onChange={(search) => updateFilters({ search })}
+              onChange={(search) => updateFilters({ search })} // This will reset page to 1
             />
           </div>
 
@@ -223,7 +233,7 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
             {/* Sort */}
             <ShopSort
               value={filters.sortBy || 'newest'}
-              onChange={(sortBy) => updateFilters({ sortBy })}
+              onChange={(sortBy) => updateFilters({ sortBy })} // This will reset page to 1
             />
           </div>
         </div>
@@ -231,7 +241,8 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
         {/* Results Info */}
         <div className="flex justify-between items-center mb-6 text-sm text-gray-600">
           <span>
-            Showing {data.products.length} of {data.totalProducts} artworks
+            Showing {(data.currentPage - 1) * 12 + 1}-
+            {Math.min(data.currentPage * 12, data.totalProducts)} of {data.totalProducts} artworks
             {filters.search && ` for "${filters.search}"`}
           </span>
           {hasActiveFilters && (
@@ -275,13 +286,13 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
               ))}
             </div>
 
-            {/* Pagination */}
+            {/* Pagination - FIXED: Use separate handlePageChange function */}
             {data.totalPages > 1 && (
               <div className="mt-12">
                 <ShopPagination
                   currentPage={data.currentPage}
                   totalPages={data.totalPages}
-                  onPageChange={(page) => updateFilters({ page })}
+                  onPageChange={handlePageChange} // FIXED: Use handlePageChange instead of updateFilters
                 />
               </div>
             )}
