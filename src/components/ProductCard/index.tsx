@@ -1,4 +1,4 @@
-// src/components/ProductCard/index.tsx - FIXED VERSION
+// src/components/ProductCard/index.tsx - WITH LIGHTBOX INTEGRATION
 'use client'
 
 import React from 'react'
@@ -9,8 +9,9 @@ import {
   RequestQuoteButton,
   QuickRequestQuoteButton,
 } from '@/components/RequestQuote/RequestQuoteButton'
+import { ImageLightbox } from '@/components/ImageLightbox'
 import { cn } from '@/utilities/ui'
-import { formatPrice } from '@/utilities/shopHelpers'
+import { getMediaUrl } from '@/utilities/getMediaUrl'
 
 interface ProductCardProps {
   product: Product
@@ -31,6 +32,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { name, description, image } = product
 
+  // Prepare images for lightbox
+  const lightboxImages = React.useMemo(() => {
+    const allImages = [product.image, ...(product.images?.map((img) => img.image) || [])].filter(
+      Boolean,
+    )
+
+    return allImages
+      .map((img) => {
+        if (typeof img === 'object' && img) {
+          const fullSrc = getMediaUrl(img.url)
+          const thumbSrc = getMediaUrl(img.url) // You can add thumbnail logic here if needed
+          return {
+            src: fullSrc,
+            thumb: thumbSrc,
+            alt: img.alt || product.name,
+            subHtml: `<h4>${product.name}</h4><p>${img.alt || product.description || ''}</p>`,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Array<{ src: string; thumb: string; alt: string; subHtml: string }>
+  }, [product])
+
   if (viewMode === 'list') {
     return (
       <div
@@ -39,18 +63,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className,
         )}
       >
-        <Link
-          href={`/products/${product.id}`}
-          className="w-48 h-48 relative overflow-hidden bg-gray-100 flex-shrink-0"
-        >
-          {image && typeof image === 'object' && (
-            <MediaComponent
-              resource={image as Media}
-              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-              priority={priority}
-            />
-          )}
-        </Link>
+        {/* Image with lightbox - List View */}
+        <div className="w-48 h-48 relative overflow-hidden bg-gray-100 flex-shrink-0">
+          <ImageLightbox images={lightboxImages} className="w-full h-full">
+            {image && typeof image === 'object' && (
+              <MediaComponent
+                resource={image as Media}
+                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                priority={priority}
+              />
+            )}
+          </ImageLightbox>
+
+          {/* View Details Link Overlay */}
+          <Link
+            href={`/products/${product.id}`}
+            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100"
+          >
+            <span className="text-white text-sm font-medium bg-black bg-opacity-50 px-3 py-1 rounded-full">
+              View Details
+            </span>
+          </Link>
+        </div>
 
         <div className="flex-1 p-6 flex flex-col justify-between">
           <div>
@@ -62,14 +96,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </Link>
             </div>
 
-            {/* Badges - Removed stock status, kept featured */}
+            {/* Badges */}
             <div className="flex items-center gap-2 mb-3">
               {product.featured && (
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
                   Featured
                 </span>
               )}
-              {/* Always show as available for quote */}
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 Available for Quote
               </span>
@@ -107,30 +140,40 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         className,
       )}
     >
-      <Link href={`/products/${product.id}`} className="block">
-        <div className="aspect-square relative overflow-hidden bg-gray-100">
+      {/* Image with lightbox - Grid View */}
+      <div className="aspect-square relative overflow-hidden bg-gray-100">
+        <ImageLightbox images={lightboxImages} className="w-full h-full">
           {image && typeof image === 'object' && (
             <MediaComponent
               resource={image as Media}
-              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 cursor-pointer"
               priority={priority}
             />
           )}
+        </ImageLightbox>
 
-          {/* Quick Request Quote Button */}
-          {showRequestQuote && <QuickRequestQuoteButton product={product} />}
-        </div>
-      </Link>
+        {/* View Details Link Overlay */}
+        <Link
+          href={`/products/${product.id}`}
+          className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100"
+        >
+          <span className="text-white text-sm font-medium bg-black bg-opacity-50 px-3 py-1 rounded-full">
+            View Details
+          </span>
+        </Link>
+
+        {/* Quick Request Quote Button */}
+        {showRequestQuote && <QuickRequestQuoteButton product={product} />}
+      </div>
 
       <div className="p-4 space-y-3">
-        {/* Badges - Removed stock status, kept featured */}
+        {/* Badges */}
         <div className="flex items-center gap-2">
           {product.featured && (
             <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
               Featured
             </span>
           )}
-          {/* Always show as available for quote */}
           <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
             Available for Quote
           </span>

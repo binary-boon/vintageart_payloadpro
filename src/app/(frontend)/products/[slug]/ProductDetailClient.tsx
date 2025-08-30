@@ -1,14 +1,16 @@
-// src/app/(frontend)/products/[slug]/ProductDetailClient.tsx - FIXED VERSION
+// src/app/(frontend)/products/[slug]/ProductDetailClient.tsx - WITH LIGHTBOX
 'use client'
 
-import React, { useState } from 'react'
-import Image from 'next/image'
+import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Product, Media } from '@/payload-types'
 import { Media as MediaComponent } from '@/components/Media'
 import { RequestQuoteButton } from '@/components/RequestQuote/RequestQuoteButton'
 import { ProductCard } from '@/components/ProductCard'
-import { RichText } from '@payloadcms/richtext-lexical/react' // FIXED: Use RichText instead of serialize
+import { ImageLightbox } from '@/components/ImageLightbox'
+import { RichText } from '@payloadcms/richtext-lexical/react'
+import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { ZoomIn } from 'lucide-react'
 
 interface ProductDetailClientProps {
   product: Product
@@ -25,6 +27,25 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   const allImages = [product.image, ...(product.images?.map((img) => img.image) || [])].filter(
     Boolean,
   )
+
+  // Prepare images for lightbox
+  const lightboxImages = useMemo(() => {
+    return allImages
+      .map((img) => {
+        if (typeof img === 'object' && img) {
+          const fullSrc = getMediaUrl(img.url)
+          const thumbSrc = getMediaUrl(img.url) // You can add thumbnail logic here if needed
+          return {
+            src: fullSrc,
+            thumb: thumbSrc,
+            alt: img.alt || product.name,
+            subHtml: `<h4>${product.name}</h4><p>${img.alt || product.description || ''}</p>`,
+          }
+        }
+        return null
+      })
+      .filter(Boolean) as Array<{ src: string; thumb: string; alt: string; subHtml: string }>
+  }, [allImages, product.name, product.description])
 
   // Get variant data from product or use defaults
   const availableSizes = product.availableVariants?.sizes?.map((s) => s.sizeLabel) || [
@@ -69,18 +90,27 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          {/* Image Gallery */}
+          {/* Image Gallery with Lightbox */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="aspect-square relative overflow-hidden rounded-lg bg-gray-100 border">
-              {allImages[selectedImageIndex] &&
-                typeof allImages[selectedImageIndex] === 'object' && (
-                  <MediaComponent
-                    resource={allImages[selectedImageIndex] as Media}
-                    className="object-cover w-full h-full"
-                    priority
-                  />
-                )}
+            {/* Main Image with Lightbox */}
+            <div className="aspect-square relative overflow-hidden rounded-lg bg-gray-100 border group">
+              <ImageLightbox images={lightboxImages} className="w-full h-full">
+                {allImages[selectedImageIndex] &&
+                  typeof allImages[selectedImageIndex] === 'object' && (
+                    <MediaComponent
+                      resource={allImages[selectedImageIndex] as Media}
+                      className="object-cover w-full h-full cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                      priority
+                    />
+                  )}
+              </ImageLightbox>
+
+              {/* Zoom indicator overlay */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                <div className="bg-white bg-opacity-90 rounded-full p-3">
+                  <ZoomIn className="w-6 h-6 text-gray-700" />
+                </div>
+              </div>
 
               {/* Featured badge */}
               {product.featured && (
@@ -97,21 +127,34 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 relative overflow-hidden rounded-lg border-2 transition-all ${
+                    className={`flex-shrink-0 w-20 h-20 relative overflow-hidden rounded-lg border-2 transition-all group ${
                       selectedImageIndex === index
                         ? 'border-amber-500 ring-2 ring-amber-200'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     {image && typeof image === 'object' && (
-                      <MediaComponent
-                        resource={image as Media}
-                        className="object-cover w-full h-full"
-                      />
+                      <>
+                        <MediaComponent
+                          resource={image as Media}
+                          className="object-cover w-full h-full"
+                        />
+                        {/* Zoom icon for thumbnails */}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <ZoomIn className="w-4 h-4 text-white" />
+                        </div>
+                      </>
                     )}
                   </button>
                 ))}
               </div>
+            )}
+
+            {/* Image count indicator */}
+            {allImages.length > 1 && (
+              <p className="text-sm text-gray-500 text-center">
+                Tap any image to view in full resolution ({allImages.length} images available)
+              </p>
             )}
           </div>
 
@@ -222,7 +265,8 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
                 )}
               </div>
             )}
-            {/* Product Variants - Informational Only */}
+
+            {/* Product Variants */}
             <div className="space-y-6 bg-white p-6 rounded-lg border">
               <h3 className="text-xl font-semibold text-gray-900">Available Options</h3>
 
@@ -352,7 +396,6 @@ export const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             <div className="bg-white rounded-lg p-8 border">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">About This Artwork</h2>
               <div className="prose prose-lg max-w-none">
-                {/* FIXED: Use RichText component instead of serialize */}
                 <RichText data={product.fullDescription} />
               </div>
 
