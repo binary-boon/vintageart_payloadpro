@@ -17,11 +17,14 @@ export const Media: CollectionConfig = {
     read: anyone,
     update: authenticated,
   },
+  admin: {
+    useAsTitle: 'alt',
+  },
   fields: [
     {
       name: 'alt',
       type: 'text',
-      //required: true,
+      required: true,
     },
     {
       name: 'caption',
@@ -31,6 +34,33 @@ export const Media: CollectionConfig = {
           return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]
         },
       }),
+    },
+    {
+      name: 'category',
+      type: 'relationship',
+      relationTo: 'categories',
+      required: false,
+      admin: {
+        description: 'Select the artwork category for gallery filtering',
+      },
+    },
+    {
+      name: 'isGalleryImage',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Check this to display in the gallery page',
+      },
+    },
+    {
+      name: 'galleryOrder',
+      type: 'number',
+      admin: {
+        position: 'sidebar',
+        description: 'Order for displaying in gallery (lower numbers first)',
+        condition: (data, siblingData) => siblingData.isGalleryImage,
+      },
     },
   ],
   upload: {

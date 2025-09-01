@@ -1,27 +1,118 @@
 'use client'
 
-import React from 'react'
-
-import { Gallery } from '../../../components/Gallery/Gallery'
-
+import React, { useEffect, useState } from 'react'
+import { FilteredGallery } from '../../../components/Gallery/FilteredGallery'
 import styles from './page.module.scss'
 
-// Generate images array dynamically from vintage_art_thikri_1 to vintage_art_thikri_24
-const generateVintageImages = () => {
-  const images = []
-  for (let i = 1; i <= 24; i++) {
-    images.push({
-      src: `/media/vintage_art_thikri_${i}.jpg`,
-      thumb: `/media/vintage_art_thikri_${i}.jpg`, // Using same image for thumb, you can create separate thumb versions if needed
-      alt: `Vintage Art Thikri ${i}`,
-    })
-  }
-  return images
+interface GalleryImage {
+  id: string
+  src: string
+  thumb: string
+  alt: string
+  category?: {
+    id: string
+    title: string
+    slug: string
+  } | null
 }
 
-const vintageImages = generateVintageImages()
+interface Category {
+  id: string
+  title: string
+  slug: string
+  description?: string
+}
+
+interface GalleryData {
+  images: GalleryImage[]
+  categories: Category[]
+  pagination: {
+    totalDocs: number
+    totalPages: number
+    page: number
+    limit: number
+    hasNextPage: boolean
+    hasPrevPage: boolean
+  }
+}
 
 export default function GalleryPage() {
+  const [galleryData, setGalleryData] = useState<GalleryData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchGalleryData = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/gallery')
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch gallery data')
+        }
+
+        const data: GalleryData = await response.json()
+        setGalleryData(data)
+      } catch (err) {
+        console.error('Error fetching gallery data:', err)
+        setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGalleryData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.pageHeader}>
+          <div className={styles.headerContent}>
+            <h1 className={styles.title}>Vintage Art Gallery</h1>
+            <div className={styles.loading}>
+              <div className={styles.spinner}></div>
+              <p>Loading gallery...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.pageHeader}>
+          <div className={styles.headerContent}>
+            <h1 className={styles.title}>Vintage Art Gallery</h1>
+            <div className={styles.error}>
+              <p>Error: {error}</p>
+              <button onClick={() => window.location.reload()} className={styles.retryButton}>
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!galleryData || galleryData.images.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.pageHeader}>
+          <div className={styles.headerContent}>
+            <h1 className={styles.title}>Vintage Art Gallery</h1>
+            <div className={styles.noImages}>
+              <p>No gallery images found. Please add some images through the admin panel.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.container}>
       {/* Page Header */}
@@ -29,23 +120,31 @@ export default function GalleryPage() {
         <div className={styles.headerContent}>
           <h1 className={styles.title}>Vintage Art Gallery</h1>
           <p className={styles.subtitle}>
-            Discover our curated collection of {vintageImages.length} vintage artworks. Click on any
-            image to view in full detail.
+            Discover our curated collection of {galleryData.images.length} vintage artworks. Click
+            on any image to view in full detail.
           </p>
         </div>
       </div>
 
       {/* Gallery Section */}
       <div className={styles.gallerySection}>
-        <Gallery images={vintageImages} className="mb-8" />
+        <FilteredGallery
+          images={galleryData.images}
+          categories={galleryData.categories}
+          className="mb-8"
+        />
       </div>
 
-      {/* Optional: Gallery Stats */}
+      {/* Gallery Stats */}
       <div className={styles.galleryStats}>
         <div className={styles.statsGrid}>
           <div className={styles.statItem}>
-            <div className={styles.statNumber}>{vintageImages.length}</div>
+            <div className={styles.statNumber}>{galleryData.images.length}</div>
             <div className={styles.statLabel}>Artworks</div>
+          </div>
+          <div className={styles.statItem}>
+            <div className={styles.statNumber}>{galleryData.categories.length}</div>
+            <div className={styles.statLabel}>Categories</div>
           </div>
           <div className={styles.statItem}>
             <div className={styles.statNumber}>Premium</div>
@@ -56,11 +155,6 @@ export default function GalleryPage() {
             <div className={styles.statLabel}>Collection</div>
           </div>
         </div>
-      </div>
-
-      {/* Load More Button */}
-      <div className={styles.loadMoreSection}>
-        <button className={styles.loadMoreButton}>Load More Artworks</button>
       </div>
     </div>
   )

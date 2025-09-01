@@ -266,7 +266,7 @@ export interface Post {
  */
 export interface Media {
   id: string;
-  alt?: string | null;
+  alt: string;
   caption?: {
     root: {
       type: string;
@@ -282,6 +282,18 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Select the artwork category for gallery filtering
+   */
+  category?: (string | null) | Category;
+  /**
+   * Check this to display in the gallery page
+   */
+  isGalleryImage?: boolean | null;
+  /**
+   * Order for displaying in gallery (lower numbers first)
+   */
+  galleryOrder?: number | null;
   prefix?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -360,6 +372,18 @@ export interface Media {
 export interface Category {
   id: string;
   title: string;
+  /**
+   * Select the type of category
+   */
+  type: 'blog' | 'product' | 'artwork';
+  /**
+   * Brief description of this category
+   */
+  description?: string | null;
+  /**
+   * Featured image for this category
+   */
+  featuredImage?: (string | null) | Media;
   slug?: string | null;
   slugLock?: boolean | null;
   parent?: (string | null) | Category;
@@ -1588,6 +1612,9 @@ export interface PostsSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  category?: T;
+  isGalleryImage?: T;
+  galleryOrder?: T;
   prefix?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1681,6 +1708,9 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  type?: T;
+  description?: T;
+  featuredImage?: T;
   slug?: T;
   slugLock?: T;
   parent?: T;
