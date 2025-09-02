@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const mediaResult = await payload.find({
       collection: 'media',
       where: whereCondition,
-      sort: 'galleryOrder',
+      sort: '-galleryOrder', // Changed to negative for descending order (higher numbers first)
       limit,
       page,
       depth: 2, // To populate category relationship
@@ -57,19 +57,23 @@ export async function GET(request: NextRequest) {
       sort: 'title',
     })
 
-    // Transform media data
+    // Transform media data with better error handling
     const images = mediaResult.docs
       .filter((item: Media) => item.url)
       .map((item: Media) => {
         const baseUrl = getMediaUrl(item.url!)
-        const category =
-          item.category && typeof item.category === 'object'
-            ? {
-                id: item.category.id,
-                title: item.category.title,
-                slug: item.category.slug!,
-              }
-            : null
+        
+        // Handle category relationship more safely
+        let category = null
+        if (item.category) {
+          if (typeof item.category === 'object' && 'id' in item.category) {
+            category = {
+              id: item.category.id,
+              title: item.category.title,
+              slug: item.category.slug || '',
+            }
+          }
+        }
 
         return {
           id: item.id,
@@ -85,7 +89,7 @@ export async function GET(request: NextRequest) {
     const categories = categoriesResult.docs.map((cat: Category) => ({
       id: cat.id,
       title: cat.title,
-      slug: cat.slug!,
+      slug: cat.slug || '',
       description: cat.description || '',
     }))
 
@@ -103,7 +107,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Gallery API Error:', error)
-    return NextResponse.json({ error: 'Failed to fetch gallery data' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to fetch gallery data',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    }, { status: 500 })
   }
 }
 
@@ -113,11 +120,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { imageId, galleryOrder, isGalleryImage, categoryId } = body
 
+    if (!imageId) {
+      return NextResponse.json({ error: 'Image ID is required' }, { status: 400 })
+    }
+
     const payload = await getPayloadHMR({
       config: configPromise,
     })
 
-    // Update the media item
+    // Build update data object
     const updateData: any = {}
 
     if (typeof galleryOrder === 'number') {
@@ -144,7 +155,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Gallery Update API Error:', error)
-    return NextResponse.json({ error: 'Failed to update gallery image' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to update gallery image',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    }, { status: 500 })
   }
 }
 
@@ -178,6 +192,9 @@ export async function DELETE(request: NextRequest) {
     })
   } catch (error) {
     console.error('Gallery Delete API Error:', error)
-    return NextResponse.json({ error: 'Failed to remove image from gallery' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to remove image from gallery',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    }, { status: 500 })
   }
 }
