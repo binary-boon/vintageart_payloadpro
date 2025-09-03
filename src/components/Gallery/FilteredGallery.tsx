@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { LightGallery } from 'lightgallery/lightgallery'
 import lgAutoplay from 'lightgallery/plugins/autoplay'
 import lgFullscreen from 'lightgallery/plugins/fullscreen'
@@ -22,6 +22,7 @@ interface GalleryImage {
     title: string
     slug: string
   }
+  debug?: any
 }
 
 interface Category {
@@ -43,87 +44,167 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
 }) => {
   const lightboxRef = useRef<HTMLDivElement>(null)
   const galleryInstance = useRef<LightGallery | null>(null)
+  const initTimeoutRef = useRef<NodeJS.Timeout>()
+
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [filteredImages, setFilteredImages] = useState<GalleryImage[]>(images)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const [isGalleryReady, setIsGalleryReady] = useState(false)
+
+  // Memoized filter function
+  const filterImages = useCallback((categorySlug: string, allImages: GalleryImage[]) => {
+    if (categorySlug === 'all') {
+      return allImages
+    }
+    return allImages.filter((image) => image.category?.slug === categorySlug)
+  }, [])
 
   // Filter images based on active category
   useEffect(() => {
     setIsTransitioning(true)
+    setIsGalleryReady(false)
 
-    // Add a small delay for smooth transition
-    setTimeout(() => {
-      if (activeCategory === 'all') {
-        setFilteredImages(images)
-      } else {
-        const filtered = images.filter((image) => image.category?.slug === activeCategory)
-        setFilteredImages(filtered)
-      }
+    // Clear any existing timeout
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current)
+    }
+
+    // Add transition delay for smooth UX
+    const transitionTimeout = setTimeout(() => {
+      const newFiltered = filterImages(activeCategory, images)
+      setFilteredImages(newFiltered)
       setIsTransitioning(false)
-    }, 150)
-  }, [activeCategory, images])
 
-  // Initialize/reinitialize lightgallery when filtered images change
-  useEffect(() => {
-    // Destroy existing instance
+      // Set gallery ready after images are filtered
+      setTimeout(() => setIsGalleryReady(true), 100)
+    }, 200)
+
+    return () => clearTimeout(transitionTimeout)
+  }, [activeCategory, images, filterImages])
+
+  // Handle image loading errors
+  const handleImageError = useCallback((imageId: string) => {
+    console.warn(`Image failed to load: ${imageId}`)
+    setImageErrors((prev) => new Set(prev).add(imageId))
+  }, [])
+
+  // Handle image load success
+  const handleImageLoad = useCallback((imageId: string) => {
+    setImageErrors((prev) => {
+      const newSet = new Set(prev)
+      newSet.delete(imageId)
+      return newSet
+    })
+  }, [])
+
+  // Destroy gallery instance
+  const destroyGallery = useCallback(() => {
     if (galleryInstance.current) {
-      galleryInstance.current.destroy()
-      galleryInstance.current = null
-    }
-
-    // Only initialize if we have images and the transition is complete
-    if (lightboxRef.current && filteredImages.length > 0 && !isTransitioning) {
-      // Small delay to ensure DOM is fully updated
-      const timeoutId = setTimeout(() => {
-        import('lightgallery').then(({ default: lightGallery }) => {
-          if (lightboxRef.current) {
-            const lgSettings = {
-              plugins: [lgThumbnail, lgZoom, lgAutoplay, lgFullscreen],
-              speed: 500,
-              thumbnail: true,
-              animateThumb: false,
-              zoomFromOrigin: false,
-              allowMediaOverlap: true,
-              toggleThumb: true,
-              thumbWidth: 80,
-              thumbHeight: 80,
-              thumbMargin: 5,
-              licenseKey: 'GPLv3',
-            }
-
-            galleryInstance.current = lightGallery(lightboxRef.current, lgSettings as any)
-          }
-        })
-      }, 200)
-
-      return () => clearTimeout(timeoutId)
-    }
-  }, [filteredImages, isTransitioning])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (galleryInstance.current) {
+      try {
         galleryInstance.current.destroy()
+      } catch (error) {
+        console.warn('Error destroying gallery:', error)
+      } finally {
         galleryInstance.current = null
       }
     }
   }, [])
 
-  // Handle category change
-  const handleCategoryChange = (categorySlug: string) => {
-    if (categorySlug !== activeCategory) {
-      setActiveCategory(categorySlug)
+  // Initialize lightgallery
+  const initializeGallery = useCallback(() => {
+    if (!lightboxRef.current || !isGalleryReady || filteredImages.length === 0) {
+      return
     }
-  }
 
-  // Get category counts
-  const getCategoryCount = (categorySlug: string) => {
-    if (categorySlug === 'all') return images.length
-    return images.filter((image) => image.category?.slug === categorySlug).length
-  }
+    // Destroy existing instance first
+    destroyGallery()
 
-  // Styles
+    // Clear any existing timeout
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current)
+    }
+
+    // Initialize with delay to ensure DOM is ready
+    initTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { default: lightGallery } = await import('lightgallery')
+
+        if (lightboxRef.current && isGalleryReady) {
+          const lgSettings = {
+            plugins: [lgThumbnail, lgZoom, lgAutoplay, lgFullscreen],
+            speed: 400,
+            thumbnail: true,
+            animateThumb: false,
+            zoomFromOrigin: false,
+            allowMediaOverlap: true,
+            toggleThumb: true,
+            thumbWidth: 100,
+            thumbHeight: 80,
+            thumbMargin: 8,
+            licenseKey: 'GPLv3',
+            // Add error handling
+            loadYoutubeThumbnail: false,
+            youtubePlayerParams: false,
+            // Improve performance
+            preload: 2,
+            download: false,
+          }
+
+          galleryInstance.current = lightGallery(lightboxRef.current, lgSettings as any)
+          console.log('LightGallery initialized successfully')
+        }
+      } catch (error) {
+        console.error('Failed to initialize LightGallery:', error)
+      }
+    }, 300)
+  }, [isGalleryReady, filteredImages.length, destroyGallery])
+
+  // Initialize/reinitialize gallery when conditions are met
+  useEffect(() => {
+    initializeGallery()
+
+    return () => {
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current)
+      }
+    }
+  }, [initializeGallery])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      destroyGallery()
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current)
+      }
+    }
+  }, [destroyGallery])
+
+  // Handle category change with better UX
+  const handleCategoryChange = useCallback(
+    (categorySlug: string) => {
+      if (categorySlug !== activeCategory && !isTransitioning) {
+        console.log(`Switching category from ${activeCategory} to ${categorySlug}`)
+        setActiveCategory(categorySlug)
+      }
+    },
+    [activeCategory, isTransitioning],
+  )
+
+  // Get category counts with error filtering
+  const getCategoryCount = useCallback(
+    (categorySlug: string) => {
+      const filteredForCount = filterImages(categorySlug, images)
+      return filteredForCount.filter((img) => !imageErrors.has(img.id)).length
+    },
+    [images, imageErrors, filterImages],
+  )
+
+  // Filter out error images for display
+  const displayImages = filteredImages.filter((img) => !imageErrors.has(img.id))
+
+  // Styles (keeping existing styles but with improvements)
   const filterButtonsStyle: React.CSSProperties = {
     display: 'flex',
     flexWrap: 'wrap',
@@ -141,7 +222,7 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     backgroundColor: isActive ? '#8B4513' : 'white',
     color: isActive ? 'white' : '#333',
     borderRadius: '25px',
-    cursor: 'pointer',
+    cursor: isTransitioning ? 'not-allowed' : 'pointer',
     fontSize: '15px',
     fontWeight: isActive ? '600' : '500',
     transition: 'all 0.3s ease',
@@ -150,6 +231,7 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     gap: '8px',
     boxShadow: isActive ? '0 4px 12px rgba(139, 69, 19, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.1)',
     transform: isActive ? 'translateY(-2px)' : 'translateY(0)',
+    opacity: isTransitioning ? 0.7 : 1,
   })
 
   const containerStyle: React.CSSProperties = {
@@ -157,9 +239,10 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
     gap: '24px',
     padding: '20px 0',
-    opacity: isTransitioning ? 0.5 : 1,
-    transform: isTransitioning ? 'translateY(10px)' : 'translateY(0)',
-    transition: 'all 0.3s ease',
+    opacity: isTransitioning ? 0.4 : 1,
+    transform: isTransitioning ? 'translateY(20px)' : 'translateY(0)',
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    pointerEvents: isTransitioning ? 'none' : 'auto',
   }
 
   const itemStyle: React.CSSProperties = {
@@ -209,15 +292,7 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     fontWeight: '600',
     backdropFilter: 'blur(4px)',
     border: '1px solid rgba(255, 255, 255, 0.2)',
-  }
-
-  const noResultsStyle: React.CSSProperties = {
-    textAlign: 'center',
-    padding: '80px 20px',
-    color: '#666',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '12px',
-    border: '2px dashed #ddd',
+    zIndex: 2,
   }
 
   const countBadgeStyle: React.CSSProperties = {
@@ -230,6 +305,15 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     textAlign: 'center',
   }
 
+  const noResultsStyle: React.CSSProperties = {
+    textAlign: 'center',
+    padding: '80px 20px',
+    color: '#666',
+    backgroundColor: '#f9f9f9',
+    borderRadius: '12px',
+    border: '2px dashed #ddd',
+  }
+
   return (
     <div className={`vintage-filtered-gallery ${className}`}>
       {/* Category Filters */}
@@ -237,8 +321,9 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
         <button
           style={filterButtonStyle(activeCategory === 'all')}
           onClick={() => handleCategoryChange('all')}
+          disabled={isTransitioning}
           onMouseEnter={(e) => {
-            if (activeCategory !== 'all') {
+            if (activeCategory !== 'all' && !isTransitioning) {
               e.currentTarget.style.backgroundColor = '#f5f5f5'
               e.currentTarget.style.borderColor = '#8B4513'
               e.currentTarget.style.transform = 'translateY(-2px)'
@@ -261,8 +346,9 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
             key={category.id}
             style={filterButtonStyle(activeCategory === category.slug)}
             onClick={() => handleCategoryChange(category.slug)}
+            disabled={isTransitioning}
             onMouseEnter={(e) => {
-              if (activeCategory !== category.slug) {
+              if (activeCategory !== category.slug && !isTransitioning) {
                 e.currentTarget.style.backgroundColor = '#f5f5f5'
                 e.currentTarget.style.borderColor = '#8B4513'
                 e.currentTarget.style.transform = 'translateY(-2px)'
@@ -293,18 +379,58 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
         }}
       >
         {activeCategory === 'all'
-          ? `Showing all ${filteredImages.length} artworks`
-          : `Showing ${filteredImages.length} ${categories.find((c) => c.slug === activeCategory)?.title || 'artworks'}`}
+          ? `Showing all ${displayImages.length} artworks`
+          : `Showing ${displayImages.length} ${categories.find((c) => c.slug === activeCategory)?.title || 'artworks'}`}
+        {imageErrors.size > 0 && (
+          <span style={{ fontSize: '14px', color: '#e74c3c', marginLeft: '8px' }}>
+            ({imageErrors.size} failed to load)
+          </span>
+        )}
       </div>
 
+      {/* Loading indicator during transition */}
+      {isTransitioning && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '30px',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
+          }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #8B4513',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
+          <span style={{ fontSize: '16px', color: '#8B4513', fontWeight: '500' }}>
+            Loading gallery...
+          </span>
+        </div>
+      )}
+
       {/* Gallery Grid */}
-      {filteredImages.length > 0 ? (
+      {displayImages.length > 0 ? (
         <div
           ref={lightboxRef}
           style={containerStyle}
-          key={`gallery-${activeCategory}-${filteredImages.length}`} // Force re-render
+          key={`gallery-${activeCategory}-${displayImages.length}-${isGalleryReady}`}
         >
-          {filteredImages.map((image, index) => (
+          {displayImages.map((image, index) => (
             <div
               key={`${image.id}-${activeCategory}-${index}`}
               className="vintage-gallery-item"
@@ -312,14 +438,16 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
               data-sub-html={`<h4>${image.alt}</h4>${image.category ? `<p>Category: ${image.category.title}</p>` : ''}`}
               style={itemStyle}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-12px) scale(1.02)'
-                e.currentTarget.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.25)'
-                const img = e.currentTarget.querySelector('img') as HTMLImageElement
-                if (img) img.style.transform = 'scale(1.1)'
-                const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement
-                if (overlay) {
-                  overlay.style.backgroundColor = 'rgba(139, 69, 19, 0.85)'
-                  overlay.style.opacity = '1'
+                if (!isTransitioning) {
+                  e.currentTarget.style.transform = 'translateY(-12px) scale(1.02)'
+                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(0, 0, 0, 0.25)'
+                  const img = e.currentTarget.querySelector('img') as HTMLImageElement
+                  if (img) img.style.transform = 'scale(1.1)'
+                  const overlay = e.currentTarget.querySelector('.overlay') as HTMLElement
+                  if (overlay) {
+                    overlay.style.backgroundColor = 'rgba(139, 69, 19, 0.85)'
+                    overlay.style.opacity = '1'
+                  }
                 }
               }}
               onMouseLeave={(e) => {
@@ -336,7 +464,14 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
             >
               {image.category && <div style={categoryTagStyle}>{image.category.title}</div>}
 
-              <img src={image.thumb} alt={image.alt} style={imageStyle} loading="lazy" />
+              <img
+                src={image.thumb}
+                alt={image.alt}
+                style={imageStyle}
+                loading="lazy"
+                onError={() => handleImageError(image.id)}
+                onLoad={() => handleImageLoad(image.id)}
+              />
 
               <div className="overlay" style={overlayStyle}>
                 <div style={{ color: 'white', textAlign: 'center' }}>
@@ -366,53 +501,35 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎨</div>
           <h3 style={{ margin: '0 0 12px 0', color: '#8B4513' }}>No artworks found</h3>
           <p style={{ margin: '0', fontSize: '16px' }}>
-            There are no artworks in the{' '}
-            <strong>{categories.find((c) => c.slug === activeCategory)?.title}</strong> category
-            yet.
+            {imageErrors.size > 0
+              ? `All images in this category failed to load. Please check your media configuration.`
+              : `There are no artworks in the ${categories.find((c) => c.slug === activeCategory)?.title || 'selected'} category yet.`}
           </p>
           <button
             onClick={() => handleCategoryChange('all')}
             style={{
               marginTop: '20px',
-              padding: '10px 20px',
+              padding: '12px 24px',
               backgroundColor: '#8B4513',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '8px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '16px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#5d2e0b'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#8B4513'
+              e.currentTarget.style.transform = 'translateY(0)'
             }}
           >
             View All Artworks
           </button>
-        </div>
-      )}
-
-      {/* Loading indicator during transition */}
-      {isTransitioning && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 10,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          }}
-        >
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              border: '3px solid #f3f3f3',
-              borderTop: '3px solid #8B4513',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }}
-          />
         </div>
       )}
 

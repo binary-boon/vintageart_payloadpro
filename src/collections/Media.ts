@@ -102,4 +102,23 @@ export const Media: CollectionConfig = {
       },
     ],
   },
+  hooks: {
+    beforeChange: [
+      ({ data, operation }) => {
+        // Ensure proper URL structure
+        if (operation === 'create' && !data.url) {
+          throw new Error('Media upload failed - no URL generated')
+        }
+        return data
+      },
+    ],
+    afterChange: [
+      ({ doc, operation }) => {
+        // Log successful uploads
+        if (operation === 'create') {
+          console.log(`Media created successfully: ${doc.id} - ${doc.url}`)
+        }
+      },
+    ],
+  },
 }
