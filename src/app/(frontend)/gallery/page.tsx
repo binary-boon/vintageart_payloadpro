@@ -3,7 +3,7 @@ import { getPayloadHMR } from '@payloadcms/next/utilities'
 import configPromise from '@payload-config'
 import type { Media, Category } from '@/payload-types'
 import { FilteredGallery } from '../../../components/Gallery/FilteredGallery'
-import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { getMediaUrl, getThumbnailUrl } from '@/utilities/getMediaUrl'
 
 import styles from './page.module.scss'
 
@@ -45,50 +45,78 @@ async function getGalleryData(): Promise<{
       sort: 'title',
     })
 
-    // Fetch gallery images with their categories
+    // Fetch gallery images with stricter filtering
     const mediaResult = await payload.find({
       collection: 'media',
       where: {
-        isGalleryImage: {
-          equals: true,
-        },
+        and: [
+          { isGalleryImage: { equals: true } },
+          { url: { exists: true } }, // Ensure URL field exists
+          { url: { not_equals: null } }, // Ensure URL is not null
+          { url: { not_equals: '' } }, // Ensure URL is not empty string
+        ],
       },
-      sort: 'galleryOrder',
-      limit: 100, // Adjust as needed
-      depth: 2, // To populate category relationship
+      sort: '-galleryOrder',
+      limit: 200,
+      depth: 2,
     })
 
-    // Transform media data to gallery format
-    const images: GalleryImage[] = mediaResult.docs
-      .filter((item: Media) => item.url) // Ensure image has URL
-      .map((item: Media) => {
-        const baseUrl = getMediaUrl(item.url!)
-        const category =
-          item.category && typeof item.category === 'object'
-            ? {
-                id: item.category.id,
-                title: item.category.title,
-                slug: item.category.slug!,
-              }
-            : undefined
+    console.log(`Found ${mediaResult.docs.length} gallery images from database`)
 
-        return {
-          id: item.id,
-          src: baseUrl,
-          thumb: item.sizes?.medium?.url ? getMediaUrl(item.sizes.medium.url) : baseUrl,
-          alt: item.alt || `Artwork ${item.id}`,
-          category,
+    // Transform and filter media data with comprehensive validation
+    const validImages: GalleryImage[] = []
+
+    for (const item of mediaResult.docs as Media[]) {
+      // Skip items with invalid URLs
+      if (!item.url || item.url === 'null' || item.url === 'undefined' || item.url.trim() === '') {
+        console.warn(`Skipping media ${item.id} - invalid URL:`, item.url)
+        continue
+      }
+
+      const baseUrl = getMediaUrl(item.url)
+      if (!baseUrl) {
+        console.warn(`Skipping media ${item.id} - could not generate base URL`)
+        continue
+      }
+
+      const thumbnailUrl = getThumbnailUrl(item)
+      if (!thumbnailUrl) {
+        console.warn(`Skipping media ${item.id} - could not generate thumbnail URL`)
+        continue
+      }
+
+      // Handle category relationship safely
+      let category = undefined
+      if (item.category && typeof item.category === 'object' && 'id' in item.category) {
+        category = {
+          id: item.category.id,
+          title: item.category.title || 'Untitled',
+          slug: item.category.slug || 'uncategorized',
         }
+      }
+
+      // Create valid gallery image
+      validImages.push({
+        id: item.id,
+        src: baseUrl,
+        thumb: thumbnailUrl,
+        alt: item.alt || `Vintage Artwork ${item.id}`,
+        category,
       })
+    }
+
+    console.log(
+      `Processed ${validImages.length} valid images out of ${mediaResult.docs.length} total`,
+    )
 
     // Transform categories data
     const categories: CategoryType[] = categoriesResult.docs.map((cat: Category) => ({
       id: cat.id,
-      title: cat.title,
-      slug: cat.slug!,
+      title: cat.title || 'Untitled Category',
+      slug: cat.slug || 'uncategorized',
     }))
 
-    return { images, categories }
+    return { images: validImages, categories }
   } catch (error) {
     console.error('Error fetching gallery data:', error)
     return { images: [], categories: [] }
@@ -105,8 +133,9 @@ export default async function GalleryPage() {
         <div className={styles.headerContent}>
           <h1 className={styles.title}>Vintage Art Gallery</h1>
           <p className={styles.subtitle}>
-            Discover our curated collection of {images.length} vintage artworks across{' '}
-            {categories.length} categories. Click on any image to view in full detail.
+            Discover our curated collection of {images.length} vintage artworks
+            {categories.length > 0 && ` across ${categories.length} categories`}. Click on any image
+            to view in full detail.
           </p>
         </div>
       </div>
@@ -117,87 +146,59 @@ export default async function GalleryPage() {
           <FilteredGallery images={images} categories={categories} className="mb-8" />
         ) : (
           <div className={styles.noImages}>
-            <h3>No Gallery Images Found</h3>
+            <h3>No Valid Gallery Images Found</h3>
             <p>
-              Upload images through the Payload admin dashboard and mark them as gallery images to
-              display them here.
+              Upload images through the Payload admin dashboard and ensure they have valid URLs.
+              Mark them as gallery images to display them here.
             </p>
             <div className={styles.instructionsList}>
-              <h4>To add images to the gallery:</h4>
+              <h4>Troubleshooting Steps:</h4>
               <ol>
-                <li>Go to your Payload admin dashboard</li>
-                <li>Navigate to Media collection</li>
-                <li>Upload your artwork images</li>
-                <li>Check "Display in Gallery" option</li>
-                <li>Select the appropriate artwork category</li>
-                <li>Set the gallery order number</li>
-                <li>Save the changes</li>
+                <li>Check that images uploaded successfully to S3</li>
+                <li>Ensure "Display in Gallery" option is checked</li>
+                <li>Verify images have valid URLs in the media collection</li>
+                <li>Select appropriate artwork categories</li>
+                <li>Save and refresh the page</li>
               </ol>
             </div>
           </div>
         )}
       </div>
-
-      {/* Gallery Stats */}
-      {images.length > 0 && (
-        <>
-          {/* <div className={styles.galleryStats}>
-            <div className={styles.statsGrid}>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>{images.length}</div>
-                <div className={styles.statLabel}>Total Artworks</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>{categories.length}</div>
-                <div className={styles.statLabel}>Categories</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>Premium</div>
-                <div className={styles.statLabel}>Quality</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>Vintage</div>
-                <div className={styles.statLabel}>Collection</div>
-              </div>
-            </div>
-          </div> */}
-
-          {/* Category Breakdown */}
-          {/* <div className={styles.categoryBreakdown}>
-            <h3>Collection Overview</h3>
-            <div className={styles.categoryGrid}>
-              {categories.map((category) => {
-                const categoryCount = images.filter(
-                  (img) => img.category?.slug === category.slug,
-                ).length
-                return (
-                  <div key={category.id} className={styles.categoryCard}>
-                    <h4>{category.title}</h4>
-                    <p>
-                      {categoryCount} {categoryCount === 1 ? 'artwork' : 'artworks'}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div> */}
-        </>
-      )}
     </div>
   )
 }
 
-// Metadata for SEO
 export async function generateMetadata() {
-  const { images, categories } = await getGalleryData()
+  try {
+    const { images, categories } = await getGalleryData()
 
-  return {
-    title: 'Vintage Art Gallery | Curated Collection',
-    description: `Browse our curated collection of ${images.length} vintage artworks across ${categories.length} categories including handpainted, metal, wooden, and thikri art pieces.`,
-    openGraph: {
-      title: 'Vintage Art Gallery | Curated Collection',
-      description: `Discover ${images.length} unique vintage artworks in our gallery`,
-      type: 'website',
-    },
+    const title =
+      images.length > 0 ? `Vintage Art Gallery | ${images.length} Artworks` : 'Vintage Art Gallery'
+
+    const description =
+      images.length > 0
+        ? `Browse our curated collection of ${images.length} vintage artworks across ${categories.length} categories.`
+        : 'Explore our vintage art collection featuring handpainted, metal, wooden, and thikri artworks.'
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    }
+  } catch (error) {
+    console.error('Error generating metadata:', error)
+
+    return {
+      title: 'Vintage Art Gallery',
+      description: 'Explore our vintage art collection',
+    }
   }
 }

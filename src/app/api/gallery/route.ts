@@ -3,7 +3,7 @@ import { getPayloadHMR } from '@payloadcms/next/utilities'
 import configPromise from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import type { Media, Category } from '@/payload-types'
-import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { getMediaUrl, getThumbnailUrl } from '@/utilities/getMediaUrl'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -16,13 +16,19 @@ export async function GET(request: NextRequest) {
       config: configPromise,
     })
 
-    // Build where condition based on category filter
+    // Build where condition with strict URL validation
     const whereCondition: any = {
-      isGalleryImage: { equals: true },
+      and: [
+        { isGalleryImage: { equals: true } },
+        { url: { exists: true } },
+        { url: { not_equals: null } },
+        { url: { not_equals: '' } },
+        { url: { not_equals: 'null' } },
+        { url: { not_equals: 'undefined' } },
+      ],
     }
 
     if (category && category !== 'all') {
-      // Find the category first
       const categoryDoc = await payload.find({
         collection: 'categories',
         where: {
@@ -32,7 +38,7 @@ export async function GET(request: NextRequest) {
       })
 
       if (categoryDoc.docs.length > 0) {
-        whereCondition.category = { equals: categoryDoc.docs[0].id }
+        whereCondition.and.push({ category: { equals: categoryDoc.docs[0].id } })
       } else {
         return NextResponse.json({ error: 'Category not found' }, { status: 404 })
       }
@@ -42,10 +48,10 @@ export async function GET(request: NextRequest) {
     const mediaResult = await payload.find({
       collection: 'media',
       where: whereCondition,
-      sort: '-galleryOrder', // Changed to negative for descending order (higher numbers first)
+      sort: '-galleryOrder',
       limit,
       page,
-      depth: 2, // To populate category relationship
+      depth: 2,
     })
 
     // Fetch artwork categories
@@ -57,33 +63,61 @@ export async function GET(request: NextRequest) {
       sort: 'title',
     })
 
-    // Transform media data with better error handling
-    const images = mediaResult.docs
-      .filter((item: Media) => item.url)
-      .map((item: Media) => {
-        const baseUrl = getMediaUrl(item.url!)
-        
-        // Handle category relationship more safely
-        let category = null
-        if (item.category) {
-          if (typeof item.category === 'object' && 'id' in item.category) {
-            category = {
-              id: item.category.id,
-              title: item.category.title,
-              slug: item.category.slug || '',
-            }
-          }
-        }
+    console.log(`Found ${mediaResult.docs.length} potential gallery images`)
 
-        return {
+    // Transform media data with comprehensive validation
+    const validImages = []
+    const skippedImages = []
+
+    for (const item of mediaResult.docs as Media[]) {
+      // Additional runtime validation
+      if (!item.url || item.url === 'null' || item.url === 'undefined' || item.url.trim() === '') {
+        skippedImages.push({ id: item.id, reason: 'Invalid URL', url: item.url })
+        continue
+      }
+
+      const baseUrl = getMediaUrl(item.url)
+      if (!baseUrl) {
+        skippedImages.push({ id: item.id, reason: 'Could not generate base URL', url: item.url })
+        continue
+      }
+
+      const thumbnailUrl = getThumbnailUrl(item)
+      if (!thumbnailUrl) {
+        skippedImages.push({
           id: item.id,
-          src: baseUrl,
-          thumb: item.sizes?.medium?.url ? getMediaUrl(item.sizes.medium.url) : baseUrl,
-          alt: item.alt || `Artwork ${item.id}`,
-          category,
-          galleryOrder: item.galleryOrder || 0,
+          reason: 'Could not generate thumbnail URL',
+          url: item.url,
+        })
+        continue
+      }
+
+      // Handle category relationship
+      let category = null
+      if (item.category && typeof item.category === 'object' && 'id' in item.category) {
+        category = {
+          id: item.category.id,
+          title: item.category.title,
+          slug: item.category.slug || '',
         }
+      }
+
+      validImages.push({
+        id: item.id,
+        src: baseUrl,
+        thumb: thumbnailUrl,
+        alt: item.alt || `Artwork ${item.id}`,
+        category,
+        galleryOrder: item.galleryOrder || 0,
       })
+    }
+
+    // Log skipped images for debugging
+    if (skippedImages.length > 0) {
+      console.warn(`Skipped ${skippedImages.length} images:`, skippedImages)
+    }
+
+    console.log(`Returning ${validImages.length} valid images`)
 
     // Transform categories data
     const categories = categoriesResult.docs.map((cat: Category) => ({
@@ -94,27 +128,36 @@ export async function GET(request: NextRequest) {
     }))
 
     return NextResponse.json({
-      images,
+      images: validImages,
       categories,
       pagination: {
-        totalDocs: mediaResult.totalDocs,
-        totalPages: mediaResult.totalPages,
+        totalDocs: validImages.length, // Use actual valid count
+        totalPages: Math.ceil(validImages.length / limit),
         page: mediaResult.page,
         limit: mediaResult.limit,
         hasNextPage: mediaResult.hasNextPage,
         hasPrevPage: mediaResult.hasPrevPage,
       },
+      debug: {
+        foundInDb: mediaResult.docs.length,
+        validImages: validImages.length,
+        skippedImages: skippedImages.length,
+        skippedReasons: skippedImages.map((img) => `${img.id}: ${img.reason}`),
+      },
     })
   } catch (error) {
     console.error('Gallery API Error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to fetch gallery data',
-      details: process.env.NODE_ENV === 'development' ? error : undefined
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch gallery data',
+        details: process.env.NODE_ENV === 'development' ? error : undefined,
+      },
+      { status: 500 },
+    )
   }
 }
 
-// POST endpoint to update gallery image order
+// Keep existing POST and DELETE methods unchanged
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -128,7 +171,6 @@ export async function POST(request: NextRequest) {
       config: configPromise,
     })
 
-    // Build update data object
     const updateData: any = {}
 
     if (typeof galleryOrder === 'number') {
@@ -155,14 +197,16 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Gallery Update API Error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to update gallery image',
-      details: process.env.NODE_ENV === 'development' ? error : undefined
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to update gallery image',
+        details: process.env.NODE_ENV === 'development' ? error : undefined,
+      },
+      { status: 500 },
+    )
   }
 }
 
-// DELETE endpoint to remove image from gallery
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const imageId = searchParams.get('imageId')
@@ -176,7 +220,6 @@ export async function DELETE(request: NextRequest) {
       config: configPromise,
     })
 
-    // Remove from gallery (don't delete the media file, just unmark as gallery image)
     const updated = await payload.update({
       collection: 'media',
       id: imageId,
@@ -192,9 +235,12 @@ export async function DELETE(request: NextRequest) {
     })
   } catch (error) {
     console.error('Gallery Delete API Error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to remove image from gallery',
-      details: process.env.NODE_ENV === 'development' ? error : undefined
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to remove image from gallery',
+        details: process.env.NODE_ENV === 'development' ? error : undefined,
+      },
+      { status: 500 },
+    )
   }
 }
