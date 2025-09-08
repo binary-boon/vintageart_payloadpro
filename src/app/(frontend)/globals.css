@@ -1,7 +1,10 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-
+@import 'tailwindcss/utilities';;
+@import 'lightgallery/css/lightgallery.css';
+@import 'lightgallery/css/lg-zoom.css';
+@import 'lightgallery/css/lg-thumbnail.css';
+@import 'lightgallery/css/lg-fullscreen.css';
 @layer base {
   /* Main headings use Aboreto */
   h1 {

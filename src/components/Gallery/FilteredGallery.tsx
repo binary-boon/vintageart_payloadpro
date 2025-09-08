@@ -1,16 +1,6 @@
 'use client'
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { LightGallery } from 'lightgallery/lightgallery'
-import lgAutoplay from 'lightgallery/plugins/autoplay'
-import lgFullscreen from 'lightgallery/plugins/fullscreen'
-import lgThumbnail from 'lightgallery/plugins/thumbnail'
-import lgZoom from 'lightgallery/plugins/zoom'
-
-// Import LightGallery CSS
-import 'lightgallery/css/lightgallery.css'
-import 'lightgallery/css/lg-zoom.css'
-import 'lightgallery/css/lg-thumbnail.css'
 
 interface GalleryImage {
   id: string
@@ -43,8 +33,8 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
   className = '',
 }) => {
   const lightboxRef = useRef<HTMLDivElement>(null)
-  const galleryInstance = useRef<LightGallery | null>(null)
-  const initTimeoutRef = useRef<NodeJS.Timeout>()
+  const galleryInstanceRef = useRef<any>(null)
+  const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [filteredImages, setFilteredImages] = useState<GalleryImage[]>(images)
@@ -100,18 +90,19 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
 
   // Destroy gallery instance
   const destroyGallery = useCallback(() => {
-    if (galleryInstance.current) {
+    if (galleryInstanceRef.current) {
       try {
-        galleryInstance.current.destroy()
+        galleryInstanceRef.current.destroy(true)
+        console.log('Gallery destroyed successfully')
       } catch (error) {
         console.warn('Error destroying gallery:', error)
       } finally {
-        galleryInstance.current = null
+        galleryInstanceRef.current = null
       }
     }
   }, [])
 
-  // Initialize lightgallery
+  // Initialize lightgallery with corrected imports
   const initializeGallery = useCallback(() => {
     if (!lightboxRef.current || !isGalleryReady || filteredImages.length === 0) {
       return
@@ -128,34 +119,113 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     // Initialize with delay to ensure DOM is ready
     initTimeoutRef.current = setTimeout(async () => {
       try {
+        // Import LightGallery - use dynamic import for better compatibility
         const { default: lightGallery } = await import('lightgallery')
 
+        // Import plugins with proper destructuring
+        const { default: lgThumbnail } = await import('lightgallery/plugins/thumbnail')
+        const { default: lgZoom } = await import('lightgallery/plugins/zoom')
+        const { default: lgFullscreen } = await import('lightgallery/plugins/fullscreen')
+
         if (lightboxRef.current && isGalleryReady) {
-          const lgSettings = {
-            plugins: [lgThumbnail, lgZoom, lgAutoplay, lgFullscreen],
+          // Ensure we have gallery items
+          const galleryItems = lightboxRef.current.querySelectorAll('.vintage-gallery-item')
+
+          if (galleryItems.length === 0) {
+            console.warn('No gallery items found with selector .vintage-gallery-item')
+            return
+          }
+
+          console.log(`Found ${galleryItems.length} gallery items`)
+
+          const lgSettings: any = {
+            plugins: [lgThumbnail, lgZoom, lgFullscreen],
             speed: 400,
             thumbnail: true,
             animateThumb: false,
             zoomFromOrigin: false,
             allowMediaOverlap: true,
             toggleThumb: true,
-            thumbWidth: 100,
-            thumbHeight: 80,
+            thumbWidth: '100px',
+            thumbHeight: '80px',
             thumbMargin: 8,
             licenseKey: 'GPLv3',
-            // Add error handling
-            loadYoutubeThumbnail: false,
-            youtubePlayerParams: false,
-            // Improve performance
-            preload: 2,
+            // Ensure proper selector
+            selector: '.vintage-gallery-item',
+            // Essential settings for proper functionality
             download: false,
+            counter: true,
+            controls: true,
+            getCaptionFromTitleOrAlt: false,
+            // Mobile optimizations
+            swipeThreshold: 50,
+            enableSwipe: true,
+            enableDrag: true,
+            // Performance settings
+            preload: 2,
+            hideScrollbar: true,
+            closable: true,
+            escKey: true,
+            keyPress: true,
+            mousewheel: false,
+            // Use correct mode
+            mode: 'lg-slide',
           }
 
-          galleryInstance.current = lightGallery(lightboxRef.current, lgSettings as any)
-          console.log('LightGallery initialized successfully')
+          console.log('Initializing LightGallery with settings:', lgSettings)
+          console.log('Gallery container:', lightboxRef.current)
+
+          // Initialize gallery
+          galleryInstanceRef.current = lightGallery(lightboxRef.current, lgSettings)
+
+          // Verify initialization
+          if (galleryInstanceRef.current) {
+            console.log('LightGallery instance created:', galleryInstanceRef.current)
+
+            // Add event listeners for debugging
+            const container = lightboxRef.current
+
+            const handleBeforeOpen = () => {
+              console.log('LightGallery: Opening...')
+            }
+
+            const handleAfterOpen = () => {
+              console.log('LightGallery: Opened successfully')
+            }
+
+            const handleBeforeClose = () => {
+              console.log('LightGallery: Closing...')
+            }
+
+            container.addEventListener('lgBeforeOpen', handleBeforeOpen)
+            container.addEventListener('lgAfterOpen', handleAfterOpen)
+            container.addEventListener('lgBeforeClose', handleBeforeClose)
+
+            // Test click handler
+            container.addEventListener('click', (e) => {
+              console.log('Container clicked:', e.target)
+              const galleryItem = (e.target as Element).closest('.vintage-gallery-item')
+              if (galleryItem) {
+                console.log('Gallery item clicked:', galleryItem)
+              }
+            })
+
+            console.log('LightGallery initialized successfully with event listeners')
+          } else {
+            console.error('Failed to create LightGallery instance')
+          }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to initialize LightGallery:', error)
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+          })
+        } else {
+          console.error('Unknown error type:', error)
+        }
       }
     }, 300)
   }, [isGalleryReady, filteredImages.length, destroyGallery])
@@ -170,6 +240,29 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
       }
     }
   }, [initializeGallery])
+
+  // Force re-initialization after initial load when all images are ready
+  useEffect(() => {
+    if (activeCategory === 'all' && filteredImages.length > 0) {
+      // Wait for images to load, then force re-init
+      const checkAndReinit = () => {
+        const images = document.querySelectorAll('.vintage-gallery-item img')
+        const allLoaded = Array.from(images).every((img) => (img as HTMLImageElement).complete)
+
+        if (allLoaded) {
+          console.log('All images loaded on initial render, forcing re-initialization...')
+          setTimeout(() => {
+            setIsGalleryReady(false)
+            setTimeout(() => setIsGalleryReady(true), 100)
+          }, 500)
+        }
+      }
+
+      // Check immediately and also after a delay
+      setTimeout(checkAndReinit, 1000)
+      setTimeout(checkAndReinit, 2000)
+    }
+  }, [filteredImages.length]) // Only run when images length changes on initial load
 
   // Cleanup on unmount
   useEffect(() => {
@@ -204,7 +297,7 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
   // Filter out error images for display
   const displayImages = filteredImages.filter((img) => !imageErrors.has(img.id))
 
-  // Styles (keeping existing styles but with improvements)
+  // Styles
   const filterButtonsStyle: React.CSSProperties = {
     display: 'flex',
     flexWrap: 'wrap',
@@ -278,6 +371,7 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     justifyContent: 'center',
     transition: 'all 0.3s ease',
     opacity: 0,
+    pointerEvents: 'none', // This is important - prevents overlay from blocking clicks
   }
 
   const categoryTagStyle: React.CSSProperties = {
@@ -293,6 +387,7 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
     backdropFilter: 'blur(4px)',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     zIndex: 2,
+    pointerEvents: 'none', // Prevents the tag from blocking clicks
   }
 
   const countBadgeStyle: React.CSSProperties = {
