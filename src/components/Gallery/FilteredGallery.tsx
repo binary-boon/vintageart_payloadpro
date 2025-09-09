@@ -476,11 +476,11 @@ export const FilteredGallery: React.FC<FilteredGalleryProps> = ({
         {activeCategory === 'all'
           ? `Showing all ${displayImages.length} artworks`
           : `Showing ${displayImages.length} ${categories.find((c) => c.slug === activeCategory)?.title || 'artworks'}`}
-        {imageErrors.size > 0 && (
+        {/* {imageErrors.size > 0 && (
           <span style={{ fontSize: '14px', color: '#e74c3c', marginLeft: '8px' }}>
             ({imageErrors.size} failed to load)
           </span>
-        )}
+        )} */}
       </div>
 
       {/* Loading indicator during transition */}

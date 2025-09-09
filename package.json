@@ -20,10 +20,13 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "cleanup:media": "node scripts/simple-cleanup.mjs",
+    "test:s3": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/test-s3-connection.js",
+    "debug:media": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/debug-media-upload.ts",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.884.0",
     "@payloadcms/admin-bar": "3.46.0",
     "@payloadcms/db-mongodb": "3.46.0",
     "@payloadcms/live-preview-react": "3.46.0",

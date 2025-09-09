@@ -19,6 +19,7 @@ export const Media: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'alt',
+    defaultColumns: ['alt', 'category', 'isGalleryImage', 'updatedAt'],
   },
   fields: [
     {
@@ -40,6 +41,9 @@ export const Media: CollectionConfig = {
       type: 'relationship',
       relationTo: 'categories',
       required: false,
+      filterOptions: {
+        type: { equals: 'artwork' }, // Only show artwork categories
+      },
       admin: {
         description: 'Select the artwork category for gallery filtering',
       },
@@ -65,7 +69,6 @@ export const Media: CollectionConfig = {
   ],
   upload: {
     // Remove staticDir when using S3 - the S3 plugin handles storage
-    // staticDir: path.resolve(dirname, '../../public/media'), // ← Remove this line
     adminThumbnail: 'thumbnail',
     focalPoint: true,
     imageSizes: [
@@ -104,20 +107,142 @@ export const Media: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data, operation }) => {
-        // Ensure proper URL structure
-        if (operation === 'create' && !data.url) {
-          throw new Error('Media upload failed - no URL generated')
+      ({ data, operation, req }) => {
+        // Add validation and debugging
+        if (operation === 'create') {
+          console.log('Creating media with data:', {
+            alt: data.alt,
+            hasFile: !!data.file,
+            filename: data.filename,
+            mimeType: data.mimeType,
+            isGalleryImage: data.isGalleryImage,
+            category: data.category,
+          })
+
+          // Ensure alt text exists for gallery images
+          if (data.isGalleryImage && !data.alt) {
+            data.alt = `Gallery Image ${Date.now()}`
+          }
         }
+
+        if (operation === 'update') {
+          console.log('Updating media with data:', {
+            id: data.id,
+            alt: data.alt,
+            url: data.url,
+            isGalleryImage: data.isGalleryImage,
+            category: data.category,
+          })
+        }
+
         return data
       },
     ],
     afterChange: [
-      ({ doc, operation }) => {
-        // Log successful uploads
+      async ({ doc, operation, req }) => {
+        // Log successful operations
         if (operation === 'create') {
-          console.log(`Media created successfully: ${doc.id} - ${doc.url}`)
+          console.log(`✅ Media created successfully:`, {
+            id: doc.id,
+            url: doc.url,
+            filename: doc.filename,
+            alt: doc.alt,
+            isGalleryImage: doc.isGalleryImage,
+            category: typeof doc.category === 'object' ? doc.category?.title : doc.category,
+          })
+        } else if (operation === 'update') {
+          console.log(`✅ Media updated successfully:`, {
+            id: doc.id,
+            url: doc.url,
+            alt: doc.alt,
+            isGalleryImage: doc.isGalleryImage,
+            category: typeof doc.category === 'object' ? doc.category?.title : doc.category,
+          })
         }
+
+        // Log media changes for debugging (detailed logging moved to hooks)
+        console.log(`Gallery image ${operation}:`, {
+          id: doc.id,
+          alt: doc.alt,
+          url: doc.url,
+          category: typeof doc.category === 'object' ? doc.category?.title : doc.category,
+          timestamp: new Date().toISOString(),
+        })
+
+        // Trigger revalidation if this is a gallery image
+        if (doc.isGalleryImage) {
+          try {
+            // Revalidate the gallery page
+            const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || process.env.VERCEL_URL
+            if (serverUrl) {
+              const revalidateUrl = serverUrl.startsWith('http')
+                ? `${serverUrl}/api/revalidate`
+                : `https://${serverUrl}/api/revalidate`
+
+              console.log('Triggering revalidation for gallery page...')
+
+              const response = await fetch(revalidateUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  path: '/gallery',
+                  secret: process.env.REVALIDATION_SECRET || 'fallback-secret',
+                }),
+              })
+
+              if (response.ok) {
+                console.log('Successfully triggered gallery revalidation')
+              } else {
+                console.warn('Revalidation request failed:', response.status, response.statusText)
+              }
+            } else {
+              console.warn('No server URL available for revalidation')
+            }
+          } catch (error) {
+            console.warn('Error triggering revalidation:', error)
+          }
+        }
+      },
+    ],
+    beforeValidate: [
+      ({ data, operation }) => {
+        // Type guard to ensure data exists
+        if (!data) return data
+
+        // Ensure alt text is provided for gallery images
+        if (data.isGalleryImage && !data.alt) {
+          data.alt = `Gallery Image ${Date.now()}`
+        }
+
+        // Log validation data for debugging
+        if (operation === 'create' || operation === 'update') {
+          console.log('Validating media data:', {
+            operation,
+            alt: data.alt,
+            isGalleryImage: data.isGalleryImage,
+            category: data.category,
+            hasUrl: !!data.url,
+            hasFilename: !!data.filename,
+          })
+        }
+
+        return data
+      },
+    ],
+    afterRead: [
+      ({ doc }) => {
+        // Add debug logging for read operations
+        if (doc.isGalleryImage && process.env.NODE_ENV === 'development') {
+          console.log(`📖 Read gallery image:`, {
+            id: doc.id,
+            alt: doc.alt,
+            url: doc.url,
+            category: typeof doc.category === 'object' ? doc.category?.title : doc.category,
+          })
+        }
+        return doc
       },
     ],
   },
