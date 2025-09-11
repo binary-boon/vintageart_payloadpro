@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.884.0",
+    "@next/third-parties": "^15.5.3",
     "@payloadcms/admin-bar": "3.46.0",
     "@payloadcms/db-mongodb": "3.46.0",
     "@payloadcms/live-preview-react": "3.46.0",
@@ -58,7 +59,9 @@
     "prism-react-renderer": "^2.3.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-ga4": "^2.1.0",
     "react-hook-form": "7.45.4",
+    "schema-dts": "^1.1.5",
     "sharp": "0.32.6",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"

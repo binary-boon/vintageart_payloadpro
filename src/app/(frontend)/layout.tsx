@@ -11,8 +11,7 @@ import React from 'react'
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
-// REMOVE THIS LINE - QuotationSidebar is already in Providers
-// import { QuotationSidebar } from '@/components/RequestQuote/QuotationSidebar'
+import { ClientWhatsAppWidget } from '@/components/WhatsAppWidget/ClientWidget'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
@@ -63,7 +62,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
           <Footer />
 
-          {/* QuotationSidebar is already included in Providers, no need to add it here */}
+          {/* WhatsApp Widget - only show on frontend pages */}
+          <ClientWhatsAppWidget />
         </Providers>
       </body>
     </html>
