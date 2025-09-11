@@ -774,6 +774,10 @@ export interface ProductListingBlock {
    * Optional title for the product listing section
    */
   title?: string | null;
+  /**
+   * Optional description/subheading that appears below the title
+   */
+  description?: string | null;
   displayMode: 'all' | 'selected' | 'latest';
   /**
    * Choose specific products to display
@@ -785,6 +789,18 @@ export interface ProductListingBlock {
   numberOfProducts?: number | null;
   showDescription?: boolean | null;
   cardsPerRow: '2' | '3' | '4';
+  callToAction?: {
+    enabled?: boolean | null;
+    label?: string | null;
+    linkType?: ('internal' | 'external') | null;
+    internalLink?: (string | null) | Page;
+    /**
+     * Include the full URL (e.g., https://example.com)
+     */
+    externalLink?: string | null;
+    openInNewTab?: boolean | null;
+    appearance?: ('primary' | 'secondary' | 'default') | null;
+  };
   id?: string | null;
   blockName?: string | null;
   blockType: 'productListing';
@@ -1566,11 +1582,23 @@ export interface FormBlockSelect<T extends boolean = true> {
  */
 export interface ProductListingBlockSelect<T extends boolean = true> {
   title?: T;
+  description?: T;
   displayMode?: T;
   selectedProducts?: T;
   numberOfProducts?: T;
   showDescription?: T;
   cardsPerRow?: T;
+  callToAction?:
+    | T
+    | {
+        enabled?: T;
+        label?: T;
+        linkType?: T;
+        internalLink?: T;
+        externalLink?: T;
+        openInNewTab?: T;
+        appearance?: T;
+      };
   id?: T;
   blockName?: T;
 }

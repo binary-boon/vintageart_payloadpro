@@ -200,9 +200,9 @@ export const ShopComponent: React.FC<ShopComponentProps> = ({ searchParams }) =>
             {/* Mobile Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black"
             >
-              <Filter className="w-4 h-4" />
+              <Filter className="w-4 h-4 text-black" />
               Filters
             </button>
 
