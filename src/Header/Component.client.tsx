@@ -1,3 +1,4 @@
+// src/Header/Component.client.tsx
 'use client'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import Link from 'next/link'
@@ -8,7 +9,6 @@ import type { Header } from '@/payload-types'
 
 import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
-
 import { QuotationIcon } from '@/components/RequestQuote/QuotationIcon'
 
 interface HeaderClientProps {
@@ -33,16 +33,20 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
   return (
     <header className="container relative z-20" {...(theme ? { 'data-theme': theme } : {})}>
-      <div className="py-8 flex justify-between items-center">
-        <Link href="/">
-          <Logo loading="eager" priority="high" className="" />
+      <div className="py-4 md:py-8 flex justify-between items-center">
+        <Link href="/" className="flex-shrink-0">
+          <Logo
+            loading="eager"
+            priority="high"
+            className="w-32 h-8 sm:w-40 sm:h-10 md:w-[250px] md:h-[60px]"
+          />
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           <HeaderNav data={data} />
 
-          {/* Quote Request and Cart Icons */}
-          <div className="flex items-center gap-2">
+          {/* Quote Request Icon - always visible */}
+          <div className="flex items-center">
             <QuotationIcon />
           </div>
         </div>

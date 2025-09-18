@@ -1,3 +1,4 @@
+// src/components/Logo/Logo.tsx
 import clsx from 'clsx'
 import React from 'react'
 
@@ -14,16 +15,32 @@ export const Logo = (props: Props) => {
   const priority = priorityFromProps || 'low'
 
   return (
-    /* eslint-disable @next/next/no-img-element */
     <img
-      alt="Payload Logo"
+      alt="Vintage Art Decor Logo"
       width={250}
       height={60}
       loading={loading}
       fetchPriority={priority}
       decoding="async"
-      className={clsx('max-w-[18.375rem] w-full h-[60px] mt-0', className)}
+      className={clsx(
+        // Base mobile styles
+        'h-8 w-auto',
+        // Small mobile (sm: 640px)
+        'sm:h-10',
+        // Medium and up (md: 768px)
+        'md:h-12 md:max-w-[200px]',
+        // Large and up (lg: 1024px)
+        'lg:h-[60px] lg:max-w-[250px]',
+        // Ensure visibility
+        'object-contain',
+        // Additional classes
+        className,
+      )}
       src="/Vintage_Art_Decor.png"
+      style={{
+        maxWidth: '100%',
+        height: 'auto',
+      }}
     />
   )
 }
