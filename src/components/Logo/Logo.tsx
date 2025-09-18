@@ -23,15 +23,15 @@ export const Logo = (props: Props) => {
       fetchPriority={priority}
       decoding="async"
       className={clsx(
-        // Base mobile styles
-        'h-8 w-auto',
+        // Base mobile styles - much smaller for mobile
+        'h-6 w-auto max-w-[120px]',
         // Small mobile (sm: 640px)
-        'sm:h-10',
+        'sm:h-7 sm:max-w-[140px]',
         // Medium and up (md: 768px)
-        'md:h-12 md:max-w-[200px]',
+        'md:h-10 md:max-w-[180px]',
         // Large and up (lg: 1024px)
         'lg:h-[60px] lg:max-w-[250px]',
-        // Ensure visibility
+        // Ensure visibility and proper scaling
         'object-contain',
         // Additional classes
         className,
