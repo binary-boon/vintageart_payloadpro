@@ -44,7 +44,7 @@
     "next-env.d.ts",
     "next.config.js",
     "next-sitemap.config.cjs"
-  ],
+, "scripts/test-s3-connection.js"  ],
   "exclude": [
     "node_modules"
   ],

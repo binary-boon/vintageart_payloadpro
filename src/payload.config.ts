@@ -15,7 +15,7 @@ import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
 import { Product } from './collections/Product'
 import { Orders } from './collections/Orders'
-import { Leads } from './collections/Leads' // ADD THIS LINE
+import { Leads } from './collections/Leads'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -79,9 +79,10 @@ export default buildConfig({
           prefix: 'media', // Optional: organize files in folders
           // Add generateFileURL to handle custom domain
           generateFileURL: ({ filename }) => {
-            // Use the server URL from environment or fallback
-            const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || getServerSideURL()
-            return `https://${process.env.S3_BUCKET}.s3.${process.env.S3_REGION}.amazonaws.com/media/${filename}`
+            // Use S3 direct URL construction
+            const bucket = process.env.S3_BUCKET!
+            const region = process.env.S3_REGION!
+            return `https://${bucket}.s3.${region}.amazonaws.com/media/${filename}`
           },
         },
       },
@@ -92,6 +93,9 @@ export default buildConfig({
           secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
         },
         region: process.env.S3_REGION!,
+        // Remove signatureVersion as it's causing the TypeScript error
+        // The S3 client will use the appropriate signature version automatically
+        forcePathStyle: false, // Use virtual hosted-style URLs
       },
     }),
   ],

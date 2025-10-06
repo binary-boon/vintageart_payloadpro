@@ -7,6 +7,7 @@ import { Montserrat } from 'next/font/google'
 // Keep Geist Mono for code if needed
 import { GeistMono } from 'geist/font/mono'
 import React from 'react'
+import Script from 'next/script'
 
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/Footer/Component'
@@ -27,7 +28,7 @@ const aboreto = Aboreto({
   display: 'swap',
   weight: '400', // Aboreto only has one weight
 })
-
+const GTM_ID = 'GTM-NTN6BJNV' // replace if needed
 // Configure Montserrat for body text and subheadings
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -46,11 +47,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
+        {/* Use next/script to inject the GTM inline script safely */}
+        <Script
+          id="gtm-inline-script"
+          strategy="afterInteractive"
+          // dangerouslySetInnerHTML is required for raw JS (the GTM snippet)
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${GTM_ID}');`,
+          }}
+        />
+
         <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
       <body>
+        {/* noscript iframe must be present for users without JS. Use dangerouslySetInnerHTML */}
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+          }}
+        />
+
         <Providers>
           <AdminBar
             adminBarProps={{
